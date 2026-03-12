@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Tier — Job Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:     #0d0f14;
+  --ink2:    #161a23;
+  --ink3:    #1e2330;
+  --rule:    #252c3a;
+  --rule2:   #2f3847;
+  --steel:   #7a8ba6;
+  --fog:     #b0bdd0;
+  --paper:   #e8edf5;
+  --amber:   #e8952a;
+  --amber-d: #7a4a08;
+  --sky:     #3b7fe8;
+  --sky-d:   #0e2a5c;
+  --green:   #1fa84e;
+  --green-d: #0a3320;
+  --red:     #d63b3b;
+  --red-d:   #3d1010;
+  --font-d:  'Barlow Condensed', sans-serif;
+  --font-b:  'Barlow', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--ink); color: var(--paper); font-family: var(--font-b); min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(255,255,255,0.012) 40px, rgba(255,255,255,0.012) 41px);
+  pointer-events: none; z-index: 0;
+}
+header {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--ink2); border-bottom: 3px solid var(--amber);
+  padding: 0 28px; display: flex; align-items: stretch; justify-content: space-between;
+}
+.header-brand { display: flex; align-items: center; gap: 14px; padding: 14px 0; }
+.header-icon { width: 40px; height: 40px; background: var(--amber); display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0,100% 0,100% 75%,87% 100%,0 100%); font-size: 18px; }
+.header-title { font-family: var(--font-d); font-size: 22px; font-weight: 800; letter-spacing: 2px; color: var(--paper); line-height: 1; }
+.header-sub   { font-size: 10px; color: var(--steel); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.btn { font-family: var(--font-d); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 9px 20px; border: none; cursor: pointer; border-radius: 3px; transition: all 0.15s; display: inline-flex; align-items: center; gap: 7px; }
+.btn-primary { background: var(--amber); color: #000; }
+.btn-primary:hover { background: #f5a82e; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--fog); border: 1px solid var(--rule2); }
+.btn-ghost:hover { border-color: var(--fog); color: var(--paper); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-sm { font-size: 11px; padding: 5px 12px; letter-spacing: 1px; }
+main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 28px 28px 60px; }
+.summary-strip { display: grid; grid-template-columns: repeat(5,1fr); gap: 2px; margin-bottom: 28px; border: 1px solid var(--rule2); border-radius: 4px; overflow: hidden; }
+.summary-cell { background: var(--ink2); padding: 14px 18px; position: relative; }
+.summary-cell::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+.s-total::after  { background: var(--steel); }
+.s-active::after { background: var(--amber); }
+.s-pending::after{ background: var(--sky); }
+.s-hold::after   { background: var(--red); }
+.s-done::after   { background: var(--green); }
+.summary-num { font-family: var(--font-d); font-size: 34px; font-weight: 800; line-height: 1; }
+.s-total  .summary-num { color: var(--fog); }
+.s-active .summary-num { color: var(--amber); }
+.s-pending .summary-num{ color: var(--sky); }
+.s-hold   .summary-num { color: var(--red); }
+.s-done   .summary-num { color: var(--green); }
+.summary-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--steel); margin-top: 4px; }
+.section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.section-hd-left { display: flex; align-items: center; gap: 12px; }
+.section-label { font-family: var(--font-d); font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--fog); }
+.section-count { background: var(--ink3); border: 1px solid var(--rule2); color: var(--steel); font-family: var(--font-d); font-size: 13px; padding: 2px 10px; border-radius: 20px; }
+.search-bar { background: var(--ink2); border: 1px solid var(--rule2); color: var(--paper); padding: 8px 14px; border-radius: 3px; font-family: var(--font-b); font-size: 13px; outline: none; width: 240px; transition: border-color 0.15s; }
+.search-bar:focus { border-color: var(--amber); }
+.search-bar::placeholder { color: var(--steel); }
+.filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.filter-btn { font-family: var(--font-d); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--rule2); background: transparent; color: var(--steel); cursor: pointer; transition: all 0.15s; }
+.filter-btn.active, .filter-btn:hover { color: var(--amber); border-color: var(--amber); background: rgba(232,149,42,0.1); }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(310px,1fr)); gap: 16px; margin-bottom: 40px; }
+.job-card { background: var(--ink2); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; transition: transform 0.15s, border-color 0.15s; animation: fadeUp 0.25s ease both; }
+.job-card:hover { transform: translateY(-3px); border-color: var(--rule2); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+.card-top { padding: 16px 18px 12px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.card-name    { font-family: var(--font-d); font-size: 17px; font-weight: 700; line-height: 1.2; color: var(--paper); }
+.card-client  { font-size: 12px; color: var(--steel); margin-top: 3px; }
+.card-address { font-size: 11px; color: var(--steel); margin-top: 2px; }
+.badge { font-family: var(--font-d); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; white-space: nowrap; flex-shrink: 0; }
+.badge-active  { background: var(--amber-d); color: var(--amber); }
+.badge-pending { background: var(--sky-d);   color: var(--sky); }
+.badge-hold    { background: var(--red-d);   color: var(--red); }
+.badge-complete{ background: var(--green-d); color: var(--green); }
+.card-progress { padding: 12px 18px; border-bottom: 1px solid var(--rule); }
+.progress-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.progress-hd-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--steel); }
+.progress-pct { font-family: var(--font-d); font-size: 20px; font-weight: 700; color: var(--amber); }
+.prog-track { height: 5px; background: var(--rule2); border-radius: 3px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg,var(--amber),#f5c842); transition: width 0.4s; }
+.card-dates { padding: 10px 18px; display: flex; gap: 20px; border-bottom: 1px solid var(--rule); }
+.date-item  { flex: 1; }
+.date-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--steel); }
+.date-val   { font-family: var(--font-d); font-size: 14px; color: var(--fog); margin-top: 2px; }
+.card-people { padding: 10px 18px; border-bottom: 1px solid var(--rule); display: flex; gap: 12px; }
+.people-block { flex: 1; min-width: 0; }
+.people-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--steel); margin-bottom: 4px; }
+.people-tags  { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 10px; background: var(--ink3); border: 1px solid var(--rule2); color: var(--fog); padding: 2px 8px; border-radius: 2px; font-family: var(--font-d); }
+.tag-empty { font-size: 10px; color: var(--rule2); font-style: italic; }
+.card-co { padding: 10px 18px; border-bottom: 1px solid var(--rule); }
+.co-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--steel); margin-bottom: 5px; }
+.co-item  { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+.co-desc  { color: var(--fog); }
+.co-amt   { font-family: var(--font-d); color: var(--amber); font-size: 13px; }
+.co-none  { font-size: 11px; color: var(--rule2); font-style: italic; }
+.card-actions { padding: 10px 18px; display: flex; gap: 8px; justify-content: flex-end; }
+.table-wrap { background: var(--ink2); border: 1px solid var(--rule); border-radius: 6px; overflow-x: auto; }
+table { width: 100%; min-width: 900px; border-collapse: collapse; }
+thead tr { background: var(--ink3); border-bottom: 2px solid var(--rule2); }
+th { padding: 10px 14px; text-align: left; font-family: var(--font-d); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--steel); white-space: nowrap; cursor: pointer; }
+th:hover { color: var(--fog); }
+td { padding: 12px 14px; border-bottom: 1px solid var(--rule); font-size: 12px; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.tbl-name { font-family: var(--font-d); font-size: 15px; font-weight: 600; color: var(--paper); }
+.tbl-sub  { font-size: 10px; color: var(--steel); margin-top: 2px; }
+.prog-mini-wrap { display: flex; align-items: center; gap: 8px; }
+.prog-mini-track { flex:1; height:4px; background:var(--rule2); border-radius:2px; min-width:60px; }
+.prog-mini-fill  { height:4px; border-radius:2px; background:var(--amber); }
+.prog-mini-pct   { font-family:var(--font-d); font-size:12px; color:var(--amber); white-space:nowrap; }
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-start; justify-content:center; padding:32px 16px; overflow-y:auto; }
+.overlay.open { display:flex; }
+.modal { background:var(--ink2); border:1px solid var(--rule2); border-top:3px solid var(--amber); border-radius:6px; width:660px; max-width:100%; padding:28px; animation:slideIn 0.2s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)} }
+.modal-title { font-family:var(--font-d); font-size:24px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--amber); margin-bottom:22px; }
+.form-section { border-top:1px solid var(--rule); padding-top:16px; margin-top:16px; }
+.form-section-title { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--steel); margin-bottom:12px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row { margin-bottom:12px; }
+label { display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--steel); margin-bottom:5px; }
+input[type=text],input[type=date],input[type=number],select,textarea { width:100%; background:var(--ink); border:1px solid var(--rule2); color:var(--paper); padding:9px 12px; border-radius:3px; font-family:var(--font-b); font-size:13px; outline:none; transition:border-color 0.15s; }
+input:focus,select:focus,textarea:focus { border-color:var(--amber); }
+select option { background:var(--ink2); }
+textarea { resize:vertical; min-height:70px; }
+.co-form-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.co-form-item { display:grid; grid-template-columns:1fr 100px auto; gap:8px; align-items:center; background:var(--ink); border:1px solid var(--rule); padding:8px 10px; border-radius:4px; }
+.co-form-item input { background:transparent; border:none; border-bottom:1px solid var(--rule2); border-radius:0; padding:4px; font-size:12px; }
+.co-form-item input:focus { border-bottom-color:var(--amber); }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding-top:16px; border-top:1px solid var(--rule); }
+.notes-log { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:160px; overflow-y:auto; }
+.note-entry { background:var(--ink); border-left:2px solid var(--amber); padding:6px 10px; border-radius:0 3px 3px 0; font-size:12px; color:var(--fog); }
+.note-ts { font-size:9px; color:var(--steel); margin-bottom:2px; }
+.divider { height:1px; background:var(--rule); margin:32px 0 20px; position:relative; }
+.divider-label { position:absolute; top:50%; left:0; transform:translateY(-50%); background:var(--ink); padding:0 12px 0 0; font-family:var(--font-d); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--rule2); }
+/* FINANCIAL STYLES */
+.card-financials { padding:12px 18px; border-bottom:1px solid var(--rule); background:rgba(232,149,42,0.04); }
+.fin-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.fin-row:last-child { margin-bottom:0; }
+.fin-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--steel); }
+.fin-val   { font-family:var(--font-d); font-size:14px; color:var(--fog); }
+.fin-val.green { color:var(--green); }
+.fin-val.amber { color:var(--amber); }
+.fin-val.red   { color:var(--red); }
+.fin-bar-wrap  { margin-top:6px; }
+.fin-bar-track { height:4px; background:var(--rule2); border-radius:3px; overflow:hidden; position:relative; }
+.fin-bar-billed   { height:100%; border-radius:3px; background:var(--sky); position:absolute; top:0; left:0; transition:width 0.4s; }
+.fin-bar-collected{ height:100%; border-radius:3px; background:var(--green); position:absolute; top:0; left:0; transition:width 0.4s; }
+.fin-bar-labels   { display:flex; justify-content:space-between; margin-top:3px; font-size:9px; color:var(--steel); font-family:var(--font-d); }
+.draw-list { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+.draw-item { display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; font-size:11px; padding:5px 8px; background:var(--ink); border-radius:3px; border:1px solid var(--rule); }
+.draw-desc { color:var(--fog); }
+.draw-amt  { font-family:var(--font-d); font-size:13px; color:var(--amber); white-space:nowrap; }
+.draw-badge { font-family:var(--font-d); font-size:9px; font-weight:700; letter-spacing:0.5px; padding:2px 7px; border-radius:2px; text-transform:uppercase; white-space:nowrap; }
+.db-paid     { background:var(--green-d); color:var(--green); }
+.db-invoiced { background:var(--sky-d);   color:var(--sky); }
+.db-overdue  { background:var(--red-d);   color:var(--red); }
+.db-pending  { background:var(--ink3);    color:var(--steel); border:1px solid var(--rule2); }
+.fin-summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-bottom:24px; border:1px solid var(--rule2); border-radius:4px; overflow:hidden; }
+.fin-summary-cell { background:var(--ink2); padding:12px 16px; }
+.fin-summary-num  { font-family:var(--font-d); font-size:26px; font-weight:800; line-height:1; }
+.fin-summary-lbl  { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--steel); margin-top:3px; }
+.draw-form-item { display:grid; grid-template-columns:1fr 110px 130px auto; gap:8px; align-items:center; background:var(--ink); border:1px solid var(--rule); padding:8px 10px; border-radius:4px; }
+.draw-form-item input, .draw-form-item select { background:transparent; border:none; border-bottom:1px solid var(--rule2); border-radius:0; padding:4px; font-size:12px; color:var(--paper); }
+.draw-form-item input:focus, .draw-form-item select:focus { border-bottom-color:var(--amber); outline:none; }
+.draw-form-item select option { background:var(--ink2); }
+/* NAV TABS */
+.nav-tabs { display:flex; align-items:center; gap:2px; padding:0 28px; background:var(--ink2); border-bottom:1px solid var(--rule); }
+.nav-tab { font-family:var(--font-d); font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:12px 20px; color:var(--steel); cursor:pointer; border-bottom:3px solid transparent; transition:all 0.15s; background:none; border-top:none; border-left:none; border-right:none; }
+.nav-tab:hover { color:var(--fog); }
+.nav-tab.active { color:var(--amber); border-bottom-color:var(--amber); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+/* CLIENT DB STYLES */
+.client-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-top:20px; }
+.client-card { background:var(--ink2); border:1px solid var(--rule); border-radius:6px; overflow:hidden; transition:transform 0.15s,border-color 0.15s; }
+.client-card:hover { transform:translateY(-2px); border-color:var(--rule2); }
+.client-card-top { padding:16px 18px 12px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between; align-items:flex-start; }
+.client-name { font-family:var(--font-d); font-size:18px; font-weight:700; color:var(--paper); }
+.client-job-count { font-family:var(--font-d); font-size:11px; color:var(--steel); background:var(--ink3); border:1px solid var(--rule2); padding:2px 9px; border-radius:10px; white-space:nowrap; }
+.client-info-row { display:flex; align-items:center; gap:10px; padding:7px 18px; border-bottom:1px solid var(--rule); font-size:12px; }
+.client-info-row:last-of-type { border-bottom:none; }
+.client-info-icon { width:16px; text-align:center; flex-shrink:0; font-size:13px; }
+.client-info-val { color:var(--fog); }
+.client-info-val a { color:var(--sky); text-decoration:none; }
+.client-info-val a:hover { text-decoration:underline; }
+.client-card-actions { padding:10px 18px; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--rule); }
+.client-jobs-chip { display:inline-flex; align-items:center; gap:5px; background:rgba(59,127,232,0.12); border:1px solid rgba(59,127,232,0.25); color:var(--sky); font-size:10px; font-family:var(--font-d); padding:2px 8px; border-radius:2px; margin:2px; }
+/* Client selector in job modal */
+.client-select-wrap { position:relative; }
+.client-select-wrap select { width:100%; }
+.client-quick-link { font-size:10px; color:var(--sky); cursor:pointer; margin-top:4px; display:inline-block; }
+.client-quick-link:hover { text-decoration:underline; }
+.client-preview { background:var(--ink); border:1px solid var(--rule2); border-radius:3px; padding:8px 12px; margin-top:6px; font-size:11px; color:var(--steel); display:none; }
+.client-preview.show { display:block; }
+.client-preview-row { display:flex; gap:8px; align-items:center; margin-bottom:3px; }
+.client-preview-row:last-child { margin-bottom:0; }
+.client-preview a { color:var(--sky); text-decoration:none; }
+/* job card client contact strip */
+.card-client-contact { padding:10px 18px; border-bottom:1px solid var(--rule); display:flex; flex-direction:column; gap:4px; }
+.comp-section { padding: 10px 18px; border-bottom: 1px solid var(--rule); }
+.comp-section-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--steel); margin-bottom: 8px; }
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.comp-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 3px; border: 1px solid var(--rule); background: var(--ink); font-size: 11px; color: var(--fog); }
+.comp-item.done   { border-color: rgba(31,168,78,0.3);  background: rgba(31,168,78,0.07); }
+.comp-item.na     { border-color: var(--rule); background: var(--ink); opacity: 0.5; }
+.comp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.comp-dot.done    { background: var(--green); }
+.comp-dot.missing { background: var(--red); }
+.comp-dot.na      { background: var(--rule2); }
+.comp-score { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.comp-score-bar { flex: 1; height: 4px; background: var(--rule2); border-radius: 2px; overflow: hidden; }
+.comp-score-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.4s; }
+.comp-score-txt { font-family: var(--font-d); font-size: 11px; color: var(--steel); white-space: nowrap; }
+/* modal compliance checkboxes */
+.comp-check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.comp-check-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 4px; border: 1px solid var(--rule2); background: var(--ink); cursor: pointer; transition: border-color 0.15s; user-select: none; }
+.comp-check-item:hover { border-color: var(--steel); }
+.comp-check-item.checked { border-color: var(--green); background: rgba(31,168,78,0.08); }
+.comp-check-item.na-item { border-color: var(--rule); opacity: 0.6; }
+.comp-checkbox { width: 16px; height: 16px; border-radius: 3px; border: 2px solid var(--rule2); background: var(--ink2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.comp-check-item.checked .comp-checkbox { background: var(--green); border-color: var(--green); }
+.comp-checkbox-tick { color: #fff; font-size: 10px; display: none; }
+.comp-check-item.checked .comp-checkbox-tick { display: block; }
+.comp-check-label { font-size: 12px; color: var(--fog); line-height: 1.3; }
+.comp-check-item.checked .comp-check-label { color: var(--green); }
+.comp-na-toggle { font-size: 9px; color: var(--rule2); margin-left: auto; cursor: pointer; white-space: nowrap; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 10px; }
+.comp-na-toggle:hover { color: var(--steel); }
+/* card compliance badge */
+.comp-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-d); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 2px; }
+.comp-badge.complete { background: rgba(31,168,78,0.15);  color: var(--green); border: 1px solid rgba(31,168,78,0.3); }
+.comp-badge.partial  { background: rgba(232,149,42,0.15); color: var(--amber); border: 1px solid rgba(232,149,42,0.3); }
+.comp-badge.empty    { background: rgba(122,139,166,0.1); color: var(--steel); border: 1px solid var(--rule2); }
+.comp-badge.issues   { background: rgba(214,59,59,0.15);  color: var(--red);   border: 1px solid rgba(214,59,59,0.3); }
+/* DOCUMENT CHECKLIST STYLES */
+.doc-section { padding:10px 18px; border-bottom:1px solid var(--rule); }
+.doc-section-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--steel); margin-bottom:8px; }
+.doc-list { display:flex; flex-direction:column; gap:4px; }
+.doc-item { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:3px; border:1px solid var(--rule); background:var(--ink); font-size:11px; }
+.doc-item.have  { border-color:rgba(31,168,78,0.3); background:rgba(31,168,78,0.06); }
+.doc-item.na    { opacity:0.45; }
+.doc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.doc-dot.have    { background:var(--green); }
+.doc-dot.missing { background:var(--steel); }
+.doc-dot.na      { background:var(--rule2); }
+.doc-item-label { flex:1; color:var(--fog); }
+.doc-item-loc   { font-size:10px; color:var(--steel); font-style:italic; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* doc badge on card */
+.doc-badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-d); font-size:10px; font-weight:700; letter-spacing:0.5px; padding:3px 8px; border-radius:2px; }
+.doc-badge.complete { background:rgba(31,168,78,0.15);  color:var(--green); border:1px solid rgba(31,168,78,0.3); }
+.doc-badge.partial  { background:rgba(232,149,42,0.15); color:var(--amber); border:1px solid rgba(232,149,42,0.3); }
+.doc-badge.empty    { background:rgba(122,139,166,0.1); color:var(--steel); border:1px solid var(--rule2); }
+.doc-badge.issues   { background:rgba(214,59,59,0.15);  color:var(--red);   border:1px solid rgba(214,59,59,0.3); }
+/* doc form in modal */
+.doc-form-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.doc-form-item { display:grid; grid-template-columns:auto 1fr 1fr; gap:8px; align-items:center; background:var(--ink); border:1px solid var(--rule); padding:10px 12px; border-radius:4px; }
+.doc-form-item.have-doc  { border-color:rgba(31,168,78,0.3); background:rgba(31,168,78,0.05); }
+.doc-form-check { display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap; }
+.doc-form-checkbox { width:16px; height:16px; border-radius:3px; border:2px solid var(--rule2); background:var(--ink2); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; }
+.doc-form-item.have-doc .doc-form-checkbox { background:var(--green); border-color:var(--green); }
+.doc-form-tick { color:#fff; font-size:10px; display:none; }
+.doc-form-item.have-doc .doc-form-tick { display:block; }
+.doc-form-name { font-size:12px; color:var(--fog); }
+.doc-form-item.have-doc .doc-form-name { color:var(--green); }
+.doc-form-loc  { background:transparent; border:none; border-bottom:1px solid var(--rule2); color:var(--paper); font-family:var(--font-b); font-size:11px; padding:3px 4px; outline:none; width:100%; transition:border-color 0.15s; }
+.doc-form-loc:focus { border-bottom-color:var(--amber); }
+.doc-form-loc::placeholder { color:var(--rule2); }
+.doc-na-btn { font-size:9px; color:var(--rule2); cursor:pointer; padding:2px 6px; border:1px solid var(--rule); border-radius:10px; white-space:nowrap; }
+.doc-na-btn:hover { color:var(--steel); }
+.doc-form-item.na-doc { opacity:0.5; }
+/* DRIVE SYNC */
+.sync-bar { display:flex; align-items:center; gap:10px; }
+.sync-status { display:flex; align-items:center; gap:7px; font-size:11px; font-family:var(--font-d); letter-spacing:1px; text-transform:uppercase; padding:6px 12px; border-radius:3px; border:1px solid var(--rule2); background:var(--ink); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.sync-status:hover { border-color:var(--fog); }
+.sync-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sync-dot.connected { background:var(--green); box-shadow:0 0 6px rgba(31,168,78,0.5); }
+.sync-dot.saving    { background:var(--amber); animation:sdpulse 1s infinite; }
+.sync-dot.offline   { background:var(--steel); }
+.sync-dot.error     { background:var(--red); }
+@keyframes sdpulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.sync-label { color:var(--fog); }
+/* Setup modal */
+.setup-step { display:flex; gap:14px; align-items:flex-start; margin-bottom:20px; }
+.setup-num  { width:28px; height:28px; border-radius:50%; background:var(--amber); color:#000; font-family:var(--font-d); font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+.setup-body { flex:1; }
+.setup-title { font-family:var(--font-d); font-size:14px; font-weight:700; color:var(--paper); margin-bottom:5px; }
+.setup-desc  { font-size:12px; color:var(--steel); line-height:1.7; }
+.setup-desc a { color:var(--sky); }
+.setup-desc code { background:var(--ink3); border:1px solid var(--rule2); padding:1px 6px; border-radius:3px; font-size:11px; color:var(--amber); font-family:monospace; }
+.setup-warn { background:rgba(232,149,42,0.08); border:1px solid rgba(232,149,42,0.25); border-radius:4px; padding:10px 14px; font-size:12px; color:var(--amber); margin-bottom:20px; line-height:1.6; }
+@media(max-width:700px){ .summary-strip{grid-template-columns:repeat(3,1fr)} .form-grid{grid-template-columns:1fr} main{padding:16px} header{padding:0 16px} .fin-summary-grid{grid-template-columns:repeat(2,1fr)} .draw-form-item{grid-template-columns:1fr 1fr} .comp-grid{grid-template-columns:1fr} .comp-check-grid{grid-template-columns:1fr} .doc-form-item{grid-template-columns:auto 1fr} }
+/* SYNC MENU */
+.sync-menu { position:absolute; top:100%; right:0; margin-top:6px; background:var(--ink2); border:1px solid var(--rule2); border-radius:6px; min-width:220px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.5); overflow:hidden; animation:slideIn 0.15s ease; }
+.sync-menu-item { display:flex; align-items:center; gap:10px; padding:11px 16px; font-size:12px; color:var(--fog); cursor:pointer; border-bottom:1px solid var(--rule); transition:background 0.1s; }
+.sync-menu-item:last-child { border-bottom:none; }
+.sync-menu-item:hover { background:rgba(255,255,255,0.04); }
+.sync-menu-item.danger { color:var(--red); }
+.sync-menu-item.danger:hover { background:rgba(214,59,59,0.1); }
+.sync-menu-icon { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
+.sync-menu-info { padding:12px 16px; border-bottom:1px solid var(--rule); }
+.sync-menu-info-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--steel); margin-bottom:3px; }
+.sync-menu-info-val { font-size:11px; color:var(--fog); font-family:monospace; word-break:break-all; }
+</style>
+<!-- FIX 3: Added onload/onerror tracking so we can distinguish "not loaded yet" from "failed" -->
+<script src="https://accounts.google.com/gsi/client" async defer onload="window._gsiReady=true" onerror="window._gsiFailed=true"></script>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-icon">🏗</div>
+    <div class="header-text">
+      <div class="header-title">TOP TIER CONTRACTORS</div>
+      <div class="header-sub">Operations — Clovis / Fresno, CA</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sync-bar">
+      <div class="sync-status" id="syncStatus" onclick="handleSyncClick()" title="Google Drive Sync">
+        <div class="sync-dot offline" id="syncDot"></div>
+        <span class="sync-label" id="syncLabel">Not Connected</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="syncResetBtn" onclick="openSyncMenu(event)" title="Drive settings" style="display:none;padding:5px 8px;font-size:13px;line-height:1">⚙</button>
+      <button class="btn btn-primary" id="addBtn" onclick="handleAddBtn()">＋ New Job</button>
+    </div>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('jobs',this)">🏗 Jobs</button>
+  <button class="nav-tab" onclick="switchTab('clients',this)">👤 Clients</button>
+</nav>
+
+<main>
+<div id="tab-jobs" class="tab-panel active">
+  <div class="summary-strip">
+    <div class="summary-cell s-total">  <div class="summary-num" id="sum-total">0</div>  <div class="summary-label">Total Jobs</div></div>
+    <div class="summary-cell s-active"> <div class="summary-num" id="sum-active">0</div> <div class="summary-label">Active</div></div>
+    <div class="summary-cell s-pending"><div class="summary-num" id="sum-pending">0</div><div class="summary-label">Pending</div></div>
+    <div class="summary-cell s-hold">   <div class="summary-num" id="sum-hold">0</div>   <div class="summary-label">On Hold</div></div>
+    <div class="summary-cell s-done">   <div class="summary-num" id="sum-done">0</div>   <div class="summary-label">Complete</div></div>
+  </div>
+
+  <div class="fin-summary-grid">
+    <div class="fin-summary-cell"><div class="fin-summary-num" id="fin-contract"    style="color:var(--fog)">$0</div><div class="fin-summary-lbl">Total Contract Value</div></div>
+    <div class="fin-summary-cell"><div class="fin-summary-num" id="fin-billed"      style="color:var(--sky)">$0</div><div class="fin-summary-lbl">Total Billed</div></div>
+    <div class="fin-summary-cell"><div class="fin-summary-num" id="fin-collected"   style="color:var(--green)">$0</div><div class="fin-summary-lbl">Collected</div></div>
+    <div class="fin-summary-cell"><div class="fin-summary-num" id="fin-outstanding" style="color:var(--amber)">$0</div><div class="fin-summary-lbl">Outstanding</div></div>
+  </div>
+
+  <div class="section-hd">
+    <div class="section-hd-left">
+      <div class="section-label">Job Cards</div>
+      <div class="section-count" id="card-count">0 jobs</div>
+    </div>
+    <div class="filter-row">
+      <input class="search-bar" id="searchBar" placeholder="Search jobs, clients, address…" oninput="renderCards()">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('Active',this)">Active</button>
+      <button class="filter-btn" onclick="setFilter('Pending',this)">Pending</button>
+      <button class="filter-btn" onclick="setFilter('On Hold',this)">On Hold</button>
+      <button class="filter-btn" onclick="setFilter('Complete',this)">Complete</button>
+    </div>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid"></div>
+
+  <div class="divider"><span class="divider-label">Full Job List</span></div>
+  <div class="section-hd">
+    <div class="section-label">All Jobs</div>
+    <div class="section-count" id="tbl-count">0 jobs</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('name')">Job / Address ↕</th>
+          <th onclick="sortBy('client')">Client ↕</th>
+          <th>Type</th>
+          <th onclick="sortBy('status')">Status ↕</th>
+          <th onclick="sortBy('progress')">Progress ↕</th>
+          <th onclick="sortBy('contractValue')">Contract ↕</th>
+          <th>Billed / Collected</th>
+          <th>Dates</th>
+          <th>Crew / Subs</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="jobsTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CLIENTS TAB -->
+<div id="tab-clients" class="tab-panel">
+  <div class="section-hd" style="margin-top:8px">
+    <div class="section-hd-left">
+      <div class="section-label">Client Database</div>
+      <div class="section-count" id="client-count">0 clients</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input class="search-bar" id="clientSearchBar" placeholder="Search clients…" oninput="renderClients()">
+      <button class="btn btn-primary" onclick="openAddClient()">＋ New Client</button>
+    </div>
+  </div>
+  <div class="client-grid" id="clientGrid"></div>
+</div>
+
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="jobOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">New Job</div>
+    <input type="hidden" id="editId">
+    <div class="form-grid">
+      <div class="form-row"><label>Job Name *</label><input type="text" id="f-name"></div>
+      <div class="form-row">
+        <label>Client</label>
+        <div class="client-select-wrap">
+          <select id="f-clientId" onchange="onClientSelect()">
+            <option value="">— Select client —</option>
+          </select>
+          <span class="client-quick-link" onclick="openAddClientFromJob()">＋ Add new client</span>
+        </div>
+        <div class="client-preview" id="clientPreview"></div>
+      </div>
+    </div>
+    <div class="form-row"><label>Job Address</label><input type="text" id="f-address"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Job Type</label>
+        <select id="f-type">
+          <option>General Contracting</option><option>Framing</option><option>Drywall</option>
+          <option>Concrete / Foundation</option><option>Remodel</option><option>Commercial Build-Out</option>
+          <option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Status</label>
+        <select id="f-status">
+          <option value="Active">Active</option><option value="Pending">Pending</option>
+          <option value="On Hold">On Hold</option><option value="Complete">Complete</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Start Date</label><input type="date" id="f-start"></div>
+      <div class="form-row"><label>Est. End Date</label><input type="date" id="f-end"></div>
+    </div>
+    <div class="form-row">
+      <label>Progress: <span id="progLabel">0%</span></label>
+      <input type="range" id="f-progress" min="0" max="100" value="0"
+        oninput="document.getElementById('progLabel').textContent=this.value+'%'"
+        style="width:100%;accent-color:var(--amber);cursor:pointer;">
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">💰 Contract & Budget</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Contract Value ($)</label><input type="number" id="f-contractValue" placeholder="0.00"></div>
+        <div class="form-row"><label>Estimated Cost / Budget ($)</label><input type="number" id="f-budget" placeholder="0.00"></div>
+      </div>
+      <div class="form-row"><label>Actual Spend to Date ($)</label><input type="number" id="f-spent" placeholder="0.00"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">🧾 Draws / Invoices</div>
+      <div id="drawFormList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addDrawRow()">＋ Add Draw / Invoice</button>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">👷 Crew & Subcontractors</div>
+      <div class="form-grid">
+        <div class="form-row"><label>Crew (comma separated)</label><input type="text" id="f-crew" placeholder="e.g. Mike R., Carlos V."></div>
+        <div class="form-row"><label>Subcontractors (comma separated)</label><input type="text" id="f-subs" placeholder="e.g. Garcia Electric"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">🏪 Vendors / Suppliers</div>
+      <div class="form-row"><label>Vendors (comma separated)</label><input type="text" id="f-vendors" placeholder="e.g. Westside Building Material"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">📋 Change Orders</div>
+      <div class="co-form-list" id="coFormList"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addCORow()">＋ Add Change Order</button>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">✅ Compliance Checklist</div>
+      <div class="comp-check-grid" id="compCheckGrid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">📁 Documents & Photos</div>
+      <div class="doc-form-list" id="docFormList"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">📝 Notes Log</div>
+      <div class="notes-log" id="notesLog"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input type="text" id="f-note" placeholder="Add a note or update…" style="flex:1">
+        <button class="btn btn-ghost btn-sm" onclick="addNote()">Add</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deleteJob()" style="display:none">Delete Job</button>
+      <button class="btn btn-primary" onclick="saveJob()">Save Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="overlay" id="clientOverlay">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-title" id="clientModalTitle">New Client</div>
+    <input type="hidden" id="editClientId">
+    <div class="form-grid">
+      <div class="form-row"><label>First Name *</label><input type="text" id="fc-first"></div>
+      <div class="form-row"><label>Last Name *</label><input type="text" id="fc-last"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Phone</label><input type="tel" id="fc-phone" placeholder="(559) 000-0000"></div>
+      <div class="form-row"><label>Email</label><input type="email" id="fc-email" placeholder="name@email.com"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">📍 Addresses</div>
+      <div class="form-row"><label>Mailing Address</label><input type="text" id="fc-mailing" placeholder="123 Main St, Fresno, CA 93720"></div>
+      <div class="form-row"><label>Project / Job Site Address</label><input type="text" id="fc-project" placeholder="If different from mailing"></div>
+    </div>
+    <div class="form-row"><label>Notes</label><textarea id="fc-notes" placeholder="Any notes about this client…" style="min-height:60px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeClientModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="deleteClientBtn" onclick="deleteClient()" style="display:none">Delete</button>
+      <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVE SETUP MODAL -->
+<div class="overlay" id="driveSetupOverlay">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title">☁️ Google Drive Sync Setup</div>
+    <div class="setup-warn">
+      ⚠️ One-time 5-minute setup. Your tracker is hosted at <strong>https://sperezjr-byte.github.io/tracker</strong> — no Terminal command needed. Once connected, data auto-saves to Google Drive every time you make a change, from any device.
+    </div>
+    <div id="setupReplaceNotice" style="display:none;background:rgba(214,59,59,0.1);border:1px solid rgba(214,59,59,0.3);border-radius:4px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:20px;line-height:1.6">
+      🔄 <strong>Replacing existing Client ID.</strong> The previous ID didn't work — paste a corrected one below in Step 6. If you already completed Steps 1–5, you can skip straight to the input field.
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div class="setup-body">
+        <div class="setup-title">Go to Google Cloud Console</div>
+        <div class="setup-desc">Open <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> and sign in with the Google account you want to save data to.</div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div class="setup-body">
+        <div class="setup-title">Create a New Project</div>
+        <div class="setup-desc">Click the project dropdown at the top → <code>New Project</code> → name it <code>Top Tier Tracker</code> → click Create.</div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div class="setup-body">
+        <div class="setup-title">Enable Google Drive API</div>
+        <div class="setup-desc">Left menu → <code>APIs & Services → Library</code> → search <code>Google Drive API</code> → click it → click <code>Enable</code>.</div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">4</div>
+      <div class="setup-body">
+        <div class="setup-title">Configure OAuth Consent Screen</div>
+        <div class="setup-desc">
+          Left menu → <code>OAuth consent screen</code> → choose <code>External</code> → click Create.<br><br>
+          • App name: <code>Top Tier Tracker</code><br>
+          • User support email &amp; Developer contact: your Gmail<br><br>
+          Click Save and Continue through all steps. Under <code>Test users</code>, add your own Gmail address. Click Save.
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">5</div>
+      <div class="setup-body">
+        <div class="setup-title">Create OAuth Credentials</div>
+        <div class="setup-desc">
+          <code>Credentials</code> → <code>Create Credentials → OAuth client ID</code><br><br>
+          • Application type: <code>Web application</code><br>
+          • Name: <code>Top Tier Tracker</code><br>
+          • Authorized JavaScript origins → Add URI: <code>https://sperezjr-byte.github.io</code><br><br>
+          Click <code>Create</code>. Copy the <strong>Client ID</strong> from the popup — it looks like:<br>
+          <code>123456789-abc...apps.googleusercontent.com</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="setup-num">6</div>
+      <div class="setup-body">
+        <div class="setup-title">Paste Your Client ID Below</div>
+        <div class="setup-desc">Paste the Client ID from step 5 here, then click Connect.</div>
+        <!-- FIX 2: Relaxed inline regex to accept uppercase, underscores, dashes -->
+        <input type="text" id="driveClientId" class="client-id-input"
+          placeholder="123456789-abcdef….apps.googleusercontent.com"
+          style="margin-top:10px;font-family:monospace;font-size:12px;width:100%;box-sizing:border-box;"
+          oninput="
+            var v = this.value.trim();
+            var hint = document.getElementById('clientIdHint');
+            if (!v) { hint.textContent=''; hint.style.color=''; return; }
+            if (/^\d+[-a-zA-Z0-9_]+\.apps\.googleusercontent\.com$/.test(v)) {
+              hint.textContent = '✅ Format looks correct';
+              hint.style.color = '#2ecc71';
+            } else if (v.includes('apps.googleusercontent.com')) {
+              hint.textContent = '⚠️ Almost — make sure there are no extra spaces or characters';
+              hint.style.color = '#e8952a';
+            } else {
+              hint.textContent = '❌ Should end with .apps.googleusercontent.com';
+              hint.style.color = '#e74c3c';
+            }
+          ">
+        <div id="clientIdHint" style="font-size:11px;margin-top:4px;height:16px;transition:color .2s"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDriveSetup()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDriveClientId()">Connect to Google Drive →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const COMP_ITEMS = [
+  { key:'permit',     label:'Building Permit Pulled' },
+  { key:'coi',        label:'Subcontractor COI on File' },
+  { key:'w9',         label:'Subcontractor W-9 on File' },
+  { key:'sb597',      label:'SB 597 Subcontract Executed' },
+  { key:'lienWaiver', label:'Lien Waiver Received' },
+  { key:'noc',        label:'NOC Filed' },
+  { key:'finalInsp',  label:'Final Inspection Passed' },
+];
+
+const DOC_ITEMS = [
+  { key:'permit',     label:'Permit / Permit Card',           icon:'🏛' },
+  { key:'plans',      label:'Plans & Drawings',               icon:'📐' },
+  { key:'subAgreements', label:'Subcontractor Agreements',    icon:'📄' },
+  { key:'coi',        label:'Insurance Certificates (COI)',   icon:'🛡' },
+  { key:'lienWaivers',label:'Lien Waivers',                   icon:'✍️' },
+  { key:'coeDocs',    label:'Change Order Docs',              icon:'🔄' },
+  { key:'inspReports',label:'Inspection Reports',             icon:'🔍' },
+  { key:'photos',     label:'Photos (Progress / Before & After)', icon:'📸' },
+  { key:'noc',        label:'Notice of Completion',           icon:'🏁' },
+];
+
+const STORE        = 'ttc_jobs_v3';
+const CLIENT_STORE = 'ttc_clients_v1';
+
+function nid() { return Date.now() + Math.random(); }
+function fmt$(n) { return n ? '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) : '—'; }
+function clientFullName(c) { return [c.first,c.last].filter(Boolean).join(' '); }
+
+let jobs    = JSON.parse(localStorage.getItem(STORE)        || 'null');
+let clients = JSON.parse(localStorage.getItem(CLIENT_STORE) || 'null');
+let currentFilter = 'all';
+let sortKey = 'name', sortDir = 1;
+let editingNotes = [], editingCOs = [], editingDraws = [], editingComp = {}, editingDocs = {};
+let _returnToJob = false;
+
+// ── DRIVE VARS ─────────────────────────────────────────────────
+const DRIVE_KEY      = 'ttc_drive_client_id';
+const DRIVE_FILE_KEY = 'ttc_drive_file_id';
+const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILENAME = 'top-tier-tracker-data.json';
+let driveClientId = localStorage.getItem(DRIVE_KEY) || '';
+let driveFileId   = localStorage.getItem(DRIVE_FILE_KEY) || '';
+let driveToken    = null;
+let syncTimeout   = null;
+function scheduleSave() {
+  if (!driveToken) return;
+  clearTimeout(syncTimeout);
+  setSyncState('saving', 'Saving…');
+  syncTimeout = setTimeout(driveSave, 3000);
+}
+function _save()        { localStorage.setItem(STORE,        JSON.stringify(jobs)); }
+function _saveClients() { localStorage.setItem(CLIENT_STORE, JSON.stringify(clients)); }
+function save()        { _save();        scheduleSave(); }
+function saveClients() { _saveClients(); scheduleSave(); }
+
+// ── SEED DATA ──────────────────────────────────────────────────
+if (!clients) {
+  clients = [
+    { id:nid(), first:'Allie & Ian',  last:'Wieland',    phone:'', email:'', mailing:'', project:'4222 N Van Ness Blvd, Fresno, CA 93704',    notes:'' },
+    { id:nid(), first:'Manuel',       last:'Prieto',      phone:'', email:'', mailing:'', project:'6712 N Van Ness Blvd, Fresno, CA 93611',    notes:'' },
+    { id:nid(), first:'Jennifer',     last:'Aniston',     phone:'', email:'', mailing:'', project:'4724 N Van Ness Blvd, Fresno, CA 93704',    notes:'' },
+    { id:nid(), first:'Rick & Janet', last:'',            phone:'', email:'', mailing:'', project:'22051 Tollhouse Road, Clovis, CA 93615',     notes:'' },
+    { id:nid(), first:'The',          last:'Fitzgeralds', phone:'', email:'', mailing:'', project:'2657 W Lake Van Circle, Fresno, CA',         notes:'' },
+    { id:nid(), first:'Marco',        last:'Figueroa',    phone:'', email:'', mailing:'', project:'2576 W Beechwood Ave, Fresno, CA 93711',     notes:'' },
+    { id:nid(), first:'Fresno',       last:'Adventist',   phone:'', email:'', mailing:'', project:'5397 E Olive Ave, Fresno, CA',               notes:'' },
+    { id:nid(), first:'John',         last:'Genito',      phone:'', email:'', mailing:'', project:'16772 Mark Road, Madera, CA 93636',          notes:'' },
+    { id:nid(), first:'Henry',        last:'Gatewood',    phone:'', email:'', mailing:'', project:'Multiple — Clovis/Fresno/Visalia',           notes:'4 active jobs: Aubberry Rd, Road 132, N Glasgow, Branson Ct' },
+    { id:nid(), first:'Kennwar',      last:'',            phone:'', email:'', mailing:'', project:'3077 Reno Ave, Clovis, CA',                  notes:'' },
+    { id:nid(), first:'Williams',     last:'Family',      phone:'', email:'', mailing:'', project:'4513 N Wilson Ave, Fresno, CA',              notes:'' },
+    { id:nid(), first:'TJ',           last:'Atwall',      phone:'', email:'', mailing:'', project:'1351 E Spruce Ave, Fresno, CA',              notes:'' },
+    { id:nid(), first:'David & Carol',last:'Penner',      phone:'', email:'', mailing:'', project:'3070 W Dovewood Ave, Fresno, CA 93711',      notes:'' },
+    { id:nid(), first:'Whitepine',    last:'Lumber',      phone:'', email:'', mailing:'', project:'4392 N Blackstone Ave, Fresno, CA 93726',    notes:'Commercial vendor/client' },
+  ];
+  saveClients();
+}
+
+if (!jobs) {
+  jobs = [
+    { id:nid(), name:'Wieland Residence',        client:'Allie & Ian Wieland',  address:'4222 N Van Ness Blvd, Fresno, CA 93704',    type:'General Contracting', status:'Active', progress:70, start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Prieto Residence',          client:'Manuel Prieto',        address:'6712 N Van Ness Blvd, Fresno, CA 93611',    type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Whitepine Lumber',          client:'Whitepine Lumber',     address:'4392 N Blackstone Ave, Fresno, CA 93726',   type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Aniston Residence',         client:'Jennifer Aniston',     address:'4724 N Van Ness Blvd, Fresno, CA 93704',    type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Tollhouse Rd Residence',    client:'Rick & Janet',         address:'22051 Tollhouse Road, Clovis, CA 93615',    type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Fitzgerald Residence',      client:'The Fitzgeralds',      address:'2657 W Lake Van Circle, Fresno, CA',        type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Figueroa Residence',        client:'Marco Figueroa',       address:'2576 W Beechwood Ave, Fresno, CA 93711',    type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Fresno Adventist',          client:'Fresno Adventist',     address:'5397 E Olive Ave, Fresno, CA',              type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Genito Residence',          client:'John Genito',          address:'16772 Mark Road, Madera, CA 93636',         type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Gatewood — Aubberry Rd',    client:'Henry Gatewood',       address:'12394 Aubberry Road, Clovis, CA 93619',     type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Kennwar — Reno Ave',        client:'Kennwar',              address:'3077 Reno Ave, Clovis, CA',                 type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Gatewood — Road 132',       client:'Henry Gatewood',       address:'32280 Road 132, Visalia, CA 93292',         type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Gatewood — N Glasgow',      client:'Henry Gatewood',       address:'11215 N Glasgow Ave, Fresno, CA 93730',     type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Gatewood — Branson Ct',     client:'Henry Gatewood',       address:'707 N Branson Ct, Visalia, CA',             type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Williams Family Residence', client:'Williams Family',      address:'4513 N Wilson Ave, Fresno, CA',             type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Atwall Residence',          client:'TJ Atwall',            address:'1351 E Spruce Ave, Fresno, CA',             type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Penner Residence',          client:'David & Carol Penner', address:'3070 W Dovewood Ave, Fresno, CA 93711',     type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Kingsburg Residence',       client:'',                     address:'12607 E Clarkson Ave, Kingsburg, CA 93631', type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+    { id:nid(), name:'Bullard Ave — Clovis',      client:'',                     address:'80 E Bullard Ave, Clovis, CA',              type:'General Contracting', status:'Active', progress:0,  start:'', end:'', crew:[], subs:[], vendors:[], changeOrders:[], notes:[], contractValue:0, budget:0, spent:0, draws:[], compliance:{}, clientId:null },
+  ];
+  save();
+}
+
+// Migrate existing records
+jobs = jobs.map(j => ({contractValue:0,budget:0,spent:0,draws:[],compliance:{},docs:{},clientId:null,...j}));
+
+// Auto-link jobs to clients by name if not already linked
+jobs.forEach(j => {
+  if (!j.clientId && j.client) {
+    const match = clients.find(c => clientFullName(c).toLowerCase() === (j.client||'').toLowerCase());
+    if (match) j.clientId = match.id;
+  }
+});
+save();
+
+// ── HELPERS ────────────────────────────────────────────────────
+function fmtDate(d) { if(!d) return '—'; const[y,m,day]=d.split('-'); return m+'/'+day+'/'+y.slice(2); }
+function badgeHtml(s) { var m={Active:'active',Pending:'pending','On Hold':'hold',Complete:'complete'}; return '<span class="badge badge-'+(m[s]||'pending')+'">'+s+'</span>'; }
+function csv(str) { return (str||'').split(',').map(function(s){return s.trim()}).filter(Boolean); }
+function jobBilled(j)      { return (j.draws||[]).reduce(function(s,d){return s+Number(d.amt||0)},0); }
+function jobCollected(j)   { return (j.draws||[]).filter(function(d){return d.status==='Paid'}).reduce(function(s,d){return s+Number(d.amt||0)},0); }
+function jobOutstanding(j) { return (j.draws||[]).filter(function(d){return d.status!=='Paid'}).reduce(function(s,d){return s+Number(d.amt||0)},0); }
+
+function compStats(j) {
+  var c = j.compliance||{};
+  var applicable = COMP_ITEMS.filter(function(i){ return c[i.key] !== 'na' });
+  var done = applicable.filter(function(i){ return c[i.key] === true });
+  return { total:applicable.length, done:done.length, pct:applicable.length ? Math.round(done.length/applicable.length*100) : 0 };
+}
+function compBadgeHtml(j) {
+  var st = compStats(j);
+  var c = j.compliance||{};
+  var hasAny = COMP_ITEMS.some(function(i){ return c[i.key] !== undefined && c[i.key] !== 'na' });
+  if (!hasAny)      return '<span class="comp-badge empty">\u2B1C Compliance</span>';
+  if (st.pct===100) return '<span class="comp-badge complete">\u2713 '+st.done+'/'+st.total+' Compliant</span>';
+  if (st.pct>=50)   return '<span class="comp-badge partial">\u26A0 '+st.done+'/'+st.total+' Complete</span>';
+  return                   '<span class="comp-badge issues">\u2715 '+st.done+'/'+st.total+' Complete</span>';
+}
+
+function docStats(j) {
+  var d = j.docs||{};
+  var applicable = DOC_ITEMS.filter(function(i){ return !d[i.key] || d[i.key].status !== 'na' });
+  var have = applicable.filter(function(i){ return d[i.key] && d[i.key].have === true });
+  return { total:applicable.length, have:have.length, pct:applicable.length ? Math.round(have.length/applicable.length*100) : 0 };
+}
+function docBadgeHtml(j) {
+  var st = docStats(j);
+  var d = j.docs||{};
+  var hasAny = DOC_ITEMS.some(function(i){ return d[i.key] !== undefined });
+  if (!hasAny)      return '<span class="doc-badge empty">\uD83D\uDCC1 Docs</span>';
+  if (st.pct===100) return '<span class="doc-badge complete">\uD83D\uDCC1 '+st.have+'/'+st.total+' On File</span>';
+  if (st.pct>=50)   return '<span class="doc-badge partial">\uD83D\uDCC1 '+st.have+'/'+st.total+' On File</span>';
+  return                   '<span class="doc-badge issues">\uD83D\uDCC1 '+st.have+'/'+st.total+' On File</span>';
+}
+
+// ── TAB SWITCHING ──────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active') });
+  document.querySelectorAll('.nav-tab').forEach(function(b){ b.classList.remove('active') });
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  var addBtn = document.getElementById('addBtn');
+  if (tab==='jobs')    { addBtn.textContent='\uFF0B New Job';    addBtn.onclick=openAdd; }
+  if (tab==='clients') { addBtn.textContent='\uFF0B New Client'; addBtn.onclick=openAddClient; renderClients(); }
+}
+function handleAddBtn() { openAdd(); }
+
+// ── FILTER / SORT ──────────────────────────────────────────────
+function filteredJobs() {
+  var q = (document.getElementById('searchBar')?.value||'').toLowerCase();
+  return jobs.filter(function(j){
+    var okStatus = currentFilter==='all' || j.status===currentFilter;
+    var okSearch = !q || (j.name||'').toLowerCase().includes(q) || (j.client||'').toLowerCase().includes(q) || (j.address||'').toLowerCase().includes(q);
+    return okStatus && okSearch;
+  });
+}
+function setFilter(val, btn) {
+  currentFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  renderCards();
+}
+function sortBy(key) { sortDir = sortKey===key ? sortDir*-1 : 1; sortKey=key; renderTable(); }
+function sorted(list) {
+  return list.slice().sort(function(a,b){
+    var av=a[sortKey]||'', bv=b[sortKey]||'';
+    return (typeof av==='number' ? av-bv : String(av).localeCompare(String(bv)))*sortDir;
+  });
+}
+
+// ── MAIN RENDER ────────────────────────────────────────────────
+function render() { updateSummary(); updateFinSummary(); renderCards(); renderTable(); }
+
+function updateSummary() {
+  document.getElementById('sum-total').textContent   = jobs.length;
+  document.getElementById('sum-active').textContent  = jobs.filter(function(j){return j.status==='Active'}).length;
+  document.getElementById('sum-pending').textContent = jobs.filter(function(j){return j.status==='Pending'}).length;
+  document.getElementById('sum-hold').textContent    = jobs.filter(function(j){return j.status==='On Hold'}).length;
+  document.getElementById('sum-done').textContent    = jobs.filter(function(j){return j.status==='Complete'}).length;
+}
+function updateFinSummary() {
+  document.getElementById('fin-contract').textContent    = fmt$(jobs.reduce(function(s,j){return s+Number(j.contractValue||0)},0));
+  document.getElementById('fin-billed').textContent      = fmt$(jobs.reduce(function(s,j){return s+jobBilled(j)},0));
+  document.getElementById('fin-collected').textContent   = fmt$(jobs.reduce(function(s,j){return s+jobCollected(j)},0));
+  document.getElementById('fin-outstanding').textContent = fmt$(jobs.reduce(function(s,j){return s+jobOutstanding(j)},0));
+}
+
+function renderCards() {
+  var grid = document.getElementById('cardsGrid');
+  var list = filteredJobs();
+  document.getElementById('card-count').textContent = list.length + ' job' + (list.length!==1?'s':'');
+  if (!list.length) { grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--steel);font-family:var(--font-d);font-size:16px;letter-spacing:2px">NO JOBS FOUND</div>'; return; }
+  grid.innerHTML = list.map(function(j){
+    var coTotal   = (j.changeOrders||[]).reduce(function(s,c){return s+Number(c.amt||0)},0);
+    var crewTags  = (j.crew||[]).map(function(t){return '<span class="tag">'+t+'</span>'}).join('')||'<span class="tag-empty">\u2014</span>';
+    var subsTags  = (j.subs||[]).map(function(t){return '<span class="tag">'+t+'</span>'}).join('')||'<span class="tag-empty">\u2014</span>';
+    var vendTags  = (j.vendors||[]).map(function(t){return '<span class="tag">'+t+'</span>'}).join('')||'<span class="tag-empty">\u2014</span>';
+    var coHtml    = (j.changeOrders||[]).length ? j.changeOrders.map(function(c){return '<div class="co-item"><span class="co-desc">'+c.desc+'</span><span class="co-amt">+$'+Number(c.amt||0).toLocaleString()+'</span></div>'}).join('') : '<div class="co-none">None yet</div>';
+    var lastNote  = j.notes&&j.notes.length ? j.notes[j.notes.length-1] : null;
+    var billed    = jobBilled(j), collected=jobCollected(j), outstanding=jobOutstanding(j);
+    var contract  = Number(j.contractValue||0), coAdj=contract+coTotal;
+    var billedPct = coAdj>0?Math.min(100,Math.round(billed/coAdj*100)):0;
+    var collectedPct = coAdj>0?Math.min(100,Math.round(collected/coAdj*100)):0;
+    var budget=Number(j.budget||0), spent=Number(j.spent||0), overBudget=budget>0&&spent>budget;
+    var drawSM = {Paid:'db-paid',Invoiced:'db-invoiced',Overdue:'db-overdue',Pending:'db-pending'};
+    var drawsHtml = (j.draws||[]).length ? j.draws.map(function(d){return '<div class="draw-item"><span class="draw-desc">'+d.desc+'</span><span class="draw-amt">'+fmt$(d.amt)+'</span><span class="draw-badge '+(drawSM[d.status]||'db-pending')+'">'+(d.status||'Pending')+'</span></div>'}).join('') : '<div class="co-none">No draws yet</div>';
+    var cl = j.clientId ? clients.find(function(c){return c.id===j.clientId}) : null;
+    var clientStrip = cl ? '<div class="card-client-contact">' +
+      (cl.phone ? '<div style="font-size:11px;color:var(--fog)">\uD83D\uDCDE <a href="tel:'+cl.phone+'" style="color:var(--sky);text-decoration:none">'+cl.phone+'</a></div>' : '') +
+      (cl.email ? '<div style="font-size:11px;color:var(--fog)">\u2709\uFE0F <a href="mailto:'+cl.email+'" style="color:var(--sky);text-decoration:none">'+cl.email+'</a></div>' : '') +
+      ((cl.phone||cl.email)?'':'<div style="font-size:10px;color:var(--rule2);font-style:italic">No contact info \u2014 edit client to add</div>') +
+    '</div>' : '';
+    return '<div class="job-card">' +
+      '<div class="card-top"><div>' +
+        '<div class="card-name">'+j.name+'</div>' +
+        '<div class="card-client">'+(clientFullName(cl||{})||j.client||'<em style="color:var(--rule2)">Client TBD</em>')+'</div>' +
+        '<div class="card-address">\uD83D\uDCCD '+(j.address||'\u2014')+'</div>' +
+      '</div>'+badgeHtml(j.status)+'</div>' +
+      clientStrip +
+      '<div class="card-progress"><div class="progress-hd"><span class="progress-hd-label">Progress</span><span class="progress-pct">'+j.progress+'%</span></div><div class="prog-track"><div class="prog-fill" style="width:'+j.progress+'%"></div></div></div>' +
+      '<div class="card-financials">' +
+        '<div class="fin-row"><span class="fin-label">Contract Value</span><span class="fin-val">'+(contract?fmt$(contract):'<em style="color:var(--rule2);font-style:italic;font-size:11px">Not set</em>')+'</span></div>' +
+        (coTotal?'<div class="fin-row"><span class="fin-label">+ Change Orders</span><span class="fin-val amber">+'+fmt$(coTotal)+'</span></div>':'') +
+        (coAdj?'<div class="fin-row"><span class="fin-label">Adjusted Total</span><span class="fin-val">'+fmt$(coAdj)+'</span></div>':'') +
+        (budget?'<div class="fin-row"><span class="fin-label">Budget / Spend</span><span class="fin-val '+(overBudget?'red':'green')+'">'+fmt$(spent)+' / '+fmt$(budget)+(overBudget?' \u26A0\uFE0F':'')+'</span></div>':'') +
+        '<div class="fin-row"><span class="fin-label">Billed</span><span class="fin-val '+(billed?'amber':'')+'">'+(billed?fmt$(billed):'\u2014')+'</span></div>' +
+        '<div class="fin-row"><span class="fin-label">Collected</span><span class="fin-val '+(collected?'green':'')+'">'+(collected?fmt$(collected):'\u2014')+'</span></div>' +
+        (outstanding?'<div class="fin-row"><span class="fin-label">Outstanding</span><span class="fin-val red">'+fmt$(outstanding)+'</span></div>':'') +
+        (coAdj&&billed?'<div class="fin-bar-wrap"><div class="fin-bar-track"><div class="fin-bar-billed" style="width:'+billedPct+'%"></div><div class="fin-bar-collected" style="width:'+collectedPct+'%"></div></div><div class="fin-bar-labels"><span style="color:var(--sky)">'+billedPct+'% billed</span><span style="color:var(--green)">'+collectedPct+'% collected</span></div></div>':'') +
+      '</div>' +
+      '<div class="card-co"><div class="co-label">Draws / Invoices</div><div class="draw-list">'+drawsHtml+'</div></div>' +
+      '<div class="card-people"><div class="people-block"><div class="people-label">Crew</div><div class="people-tags">'+crewTags+'</div></div><div class="people-block"><div class="people-label">Subs</div><div class="people-tags">'+subsTags+'</div></div></div>' +
+      '<div class="card-people" style="border-top:1px solid var(--rule)"><div class="people-block"><div class="people-label">Vendors</div><div class="people-tags">'+vendTags+'</div></div></div>' +
+      '<div class="card-co"><div class="co-label">Change Orders</div><div class="co-list">'+coHtml+'</div></div>' +
+      '<div class="comp-section"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div class="comp-section-label">Compliance</div>'+compBadgeHtml(j)+'</div>' +
+        '<div class="comp-grid">'+COMP_ITEMS.map(function(item){var val=(j.compliance||{})[item.key];if(val==='na')return '';var cls=val===true?'done':'';var dot=val===true?'done':'missing';return '<div class="comp-item '+cls+'"><div class="comp-dot '+dot+'"></div>'+item.label+'</div>';}).join('')+'</div>' +
+        (function(){var st=compStats(j);return st.total?'<div class="comp-score"><div class="comp-score-bar"><div class="comp-score-fill" style="width:'+st.pct+'%"></div></div><span class="comp-score-txt">'+st.done+'/'+st.total+'</span></div>':'';})() +
+      '</div>' +
+      '<div class="doc-section"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div class="doc-section-label">Documents</div>'+docBadgeHtml(j)+'</div>' +
+        '<div class="doc-list">'+DOC_ITEMS.map(function(item){var entry=(j.docs||{})[item.key]||{};if(entry.status==='na')return '';var have=entry.have===true;return '<div class="doc-item '+(have?'have':'')+'"><div class="doc-dot '+(have?'have':'missing')+'"></div><span class="doc-item-label">'+item.icon+' '+item.label+'</span>'+(have&&entry.loc?'<span class="doc-item-loc" title="'+entry.loc+'">'+entry.loc+'</span>':'')+'</div>';}).join('')+'</div>' +
+        (function(){var st=docStats(j);return st.total?'<div class="comp-score"><div class="comp-score-bar"><div class="comp-score-fill" style="width:'+st.pct+'%;background:var(--sky)"></div></div><span class="comp-score-txt">'+st.have+'/'+st.total+'</span></div>':'';})() +
+      '</div>' +
+      (lastNote?'<div style="padding:8px 18px;border-top:1px solid var(--rule)"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--steel);margin-bottom:3px">Latest Note</div><div style="font-size:11px;color:var(--fog)">'+lastNote.text+'</div></div>':'') +
+      '<div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openEdit('+JSON.stringify(j.id)+')">Edit</button></div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderTable() {
+  var tbody = document.getElementById('jobsTable');
+  var list  = sorted(jobs);
+  document.getElementById('tbl-count').textContent = list.length + ' job' + (list.length!==1?'s':'');
+  tbody.innerHTML = list.map(function(j){
+    var contract=Number(j.contractValue||0), coTotal=(j.changeOrders||[]).reduce(function(s,c){return s+Number(c.amt||0)},0);
+    var billed=jobBilled(j), collected=jobCollected(j), outstanding=jobOutstanding(j);
+    var people=[].concat(j.crew||[]).concat(j.subs||[]).filter(Boolean).join(', ')||'\u2014';
+    var cl = j.clientId ? clients.find(function(c){return c.id===j.clientId}) : null;
+    var clientDisplay = clientFullName(cl||{})||j.client||'<em style="color:var(--rule2)">TBD</em>';
+    var clientContact = cl ? (cl.phone?'<div style="font-size:10px"><a href="tel:'+cl.phone+'" style="color:var(--sky);text-decoration:none">'+cl.phone+'</a></div>':'') + (cl.email?'<div style="font-size:10px"><a href="mailto:'+cl.email+'" style="color:var(--sky);text-decoration:none">'+cl.email+'</a></div>':'') : '';
+    return '<tr>' +
+      '<td><div class="tbl-name">'+j.name+'</div><div class="tbl-sub">'+(j.address||'')+'</div></td>' +
+      '<td><div style="color:var(--fog)">'+clientDisplay+'</div>'+clientContact+'</td>' +
+      '<td style="color:var(--steel);font-size:11px">'+j.type+'</td>' +
+      '<td>'+badgeHtml(j.status)+'</td>' +
+      '<td><div class="prog-mini-wrap"><div class="prog-mini-track"><div class="prog-mini-fill" style="width:'+j.progress+'%"></div></div><span class="prog-mini-pct">'+j.progress+'%</span></div></td>' +
+      '<td style="font-family:var(--font-d);font-size:13px"><span style="color:var(--fog)">'+(contract?fmt$(contract):'<em style="color:var(--rule2);font-size:11px">\u2014</em>')+'</span>'+(coTotal?'<div style="font-size:10px;color:var(--amber)">+'+fmt$(coTotal)+' CO</div>':'')+'</td>' +
+      '<td>'+(billed?'<div style="font-family:var(--font-d);font-size:12px;color:var(--sky)">'+fmt$(billed)+' billed</div>':'<div style="color:var(--rule2);font-size:11px">\u2014</div>')+(collected?'<div style="font-family:var(--font-d);font-size:12px;color:var(--green)">'+fmt$(collected)+' paid</div>':'')+(outstanding?'<div style="font-family:var(--font-d);font-size:12px;color:var(--red)">'+fmt$(outstanding)+' due</div>':'')+'</td>' +
+      '<td style="font-size:11px;color:var(--steel);white-space:nowrap">'+fmtDate(j.start)+' \u2192 '+fmtDate(j.end)+'</td>' +
+      '<td style="font-size:11px;color:var(--fog);max-width:160px">'+people+'</td>' +
+      '<td><button class="btn btn-ghost btn-sm" onclick="openEdit('+JSON.stringify(j.id)+')">Edit</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ── JOB MODAL ─────────────────────────────────────────────────
+function openAdd() {
+  editingNotes=[]; editingCOs=[]; editingDraws=[]; editingComp={}; editingDocs={};
+  document.getElementById('editId').value='';
+  document.getElementById('modalTitle').textContent='New Job';
+  document.getElementById('deleteBtn').style.display='none';
+  clearForm(); renderCOForm(); renderDrawForm(); renderCompForm(); renderDocForm(); renderNotesLog();
+  populateClientSelect(null);
+  document.getElementById('jobOverlay').classList.add('open');
+}
+function openEdit(id) {
+  var j = jobs.find(function(x){return x.id===id});
+  if (!j) return;
+  editingNotes=(j.notes||[]).slice();
+  editingCOs=(j.changeOrders||[]).map(function(c){return Object.assign({},c)});
+  editingDraws=(j.draws||[]).map(function(d){return Object.assign({},d)});
+  editingComp=Object.assign({},j.compliance||{});
+  editingDocs=JSON.parse(JSON.stringify(j.docs||{}));
+  document.getElementById('editId').value=id;
+  document.getElementById('modalTitle').textContent='Edit Job';
+  document.getElementById('deleteBtn').style.display='inline-flex';
+  document.getElementById('f-name').value          =j.name||'';
+  document.getElementById('f-address').value        =j.address||'';
+  document.getElementById('f-type').value           =j.type||'General Contracting';
+  document.getElementById('f-status').value         =j.status||'Active';
+  document.getElementById('f-start').value          =j.start||'';
+  document.getElementById('f-end').value            =j.end||'';
+  document.getElementById('f-progress').value       =j.progress||0;
+  document.getElementById('progLabel').textContent  =(j.progress||0)+'%';
+  document.getElementById('f-crew').value           =(j.crew||[]).join(', ');
+  document.getElementById('f-subs').value           =(j.subs||[]).join(', ');
+  document.getElementById('f-vendors').value        =(j.vendors||[]).join(', ');
+  document.getElementById('f-contractValue').value  =j.contractValue||'';
+  document.getElementById('f-budget').value         =j.budget||'';
+  document.getElementById('f-spent').value          =j.spent||'';
+  document.getElementById('f-note').value           ='';
+  populateClientSelect(j.clientId);
+  renderCOForm(); renderDrawForm(); renderCompForm(); renderDocForm(); renderNotesLog();
+  document.getElementById('jobOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('jobOverlay').classList.remove('open'); }
+document.getElementById('jobOverlay').addEventListener('click', function(e){ if(e.target.id==='jobOverlay') closeModal(); });
+
+function clearForm() {
+  ['f-name','f-address','f-crew','f-subs','f-vendors','f-note','f-contractValue','f-budget','f-spent'].forEach(function(id){document.getElementById(id).value=''});
+  document.getElementById('f-type').value='General Contracting';
+  document.getElementById('f-status').value='Active';
+  document.getElementById('f-start').value='';
+  document.getElementById('f-end').value='';
+  document.getElementById('f-progress').value=0;
+  document.getElementById('progLabel').textContent='0%';
+}
+
+function renderCOForm() {
+  document.getElementById('coFormList').innerHTML = editingCOs.map(function(co,i){return '<div class="co-form-item"><input type="text" value="'+(co.desc||'')+'" placeholder="Description" oninput="editingCOs['+i+'].desc=this.value"><input type="number" value="'+(co.amt||'')+'" placeholder="$ Amount" oninput="editingCOs['+i+'].amt=this.value"><button class="btn btn-danger btn-sm" onclick="removeCO('+i+')">✕</button></div>'}).join('');
+}
+function addCORow()  { editingCOs.push({desc:'',amt:''}); renderCOForm(); }
+function removeCO(i) { editingCOs.splice(i,1); renderCOForm(); }
+
+function renderDrawForm() {
+  document.getElementById('drawFormList').innerHTML = editingDraws.map(function(d,i){return '<div class="draw-form-item"><input type="text" value="'+(d.desc||'')+'" placeholder="e.g. Draw 1 – Foundation" oninput="editingDraws['+i+'].desc=this.value"><input type="number" value="'+(d.amt||'')+'" placeholder="$ Amount" oninput="editingDraws['+i+'].amt=this.value"><select oninput="editingDraws['+i+'].status=this.value"><option value="Pending" '+((d.status||'Pending')==='Pending'?'selected':'')+'>Pending</option><option value="Invoiced" '+((d.status||'')==='Invoiced'?'selected':'')+'>Invoiced</option><option value="Paid" '+((d.status||'')==='Paid'?'selected':'')+'>Paid</option><option value="Overdue" '+((d.status||'')==='Overdue'?'selected':'')+'>Overdue</option></select><button class="btn btn-danger btn-sm" onclick="removeDraw('+i+')">✕</button></div>'}).join('');
+}
+function addDrawRow()  { editingDraws.push({desc:'',amt:'',status:'Pending'}); renderDrawForm(); }
+function removeDraw(i) { editingDraws.splice(i,1); renderDrawForm(); }
+
+function renderCompForm() {
+  document.getElementById('compCheckGrid').innerHTML = COMP_ITEMS.map(function(item){
+    var val=editingComp[item.key], isChecked=val===true, isNA=val==='na';
+    return '<div class="comp-check-item '+(isChecked?'checked':'')+' '+(isNA?'na-item':'')+'" id="cci-'+item.key+'" onclick="toggleComp(\''+item.key+'\')"><div class="comp-checkbox"><span class="comp-checkbox-tick">\u2713</span></div><span class="comp-check-label">'+item.label+'</span><span class="comp-na-toggle" onclick="event.stopPropagation();setCompNA(\''+item.key+'\')">'+(isNA?'\u21A9 Undo':'N/A')+'</span></div>';
+  }).join('');
+}
+function toggleComp(key) { if(editingComp[key]==='na')return; editingComp[key]=editingComp[key]===true?false:true; renderCompForm(); }
+function setCompNA(key)  { editingComp[key]=editingComp[key]==='na'?undefined:'na'; renderCompForm(); }
+
+function renderDocForm() {
+  document.getElementById('docFormList').innerHTML = DOC_ITEMS.map(function(item){
+    var entry = editingDocs[item.key] || {};
+    var have  = entry.have === true;
+    var isNA  = entry.status === 'na';
+    return '<div class="doc-form-item '+(have?'have-doc':'')+' '+(isNA?'na-doc':'')+'" id="dfi-'+item.key+'">'+
+      '<div class="doc-form-check" onclick="'+(isNA?'':("toggleDoc('"+item.key+"')"))+'">' +
+        '<div class="doc-form-checkbox"><span class="doc-form-tick">\u2713</span></div>' +
+        '<span class="doc-form-name">'+item.icon+' '+item.label+'</span>' +
+      '</div>' +
+      '<input class="doc-form-loc" type="text" placeholder="Where is it? (e.g. Google Drive / Job Folder / Binder)" value="'+(entry.loc||'')+'" oninput="setDocLoc(\''+item.key+'\',this.value)" '+(isNA?'disabled':'')+'>' +
+      '<span class="doc-na-btn" onclick="setDocNA(\''+item.key+'\')">'+(isNA?'\u21A9 Undo N/A':'N/A')+'</span>' +
+    '</div>';
+  }).join('');
+}
+function toggleDoc(key) {
+  if (!editingDocs[key]) editingDocs[key] = {};
+  editingDocs[key].have = !editingDocs[key].have;
+  renderDocForm();
+}
+function setDocLoc(key, val) {
+  if (!editingDocs[key]) editingDocs[key] = {};
+  editingDocs[key].loc = val;
+}
+function setDocNA(key) {
+  if (!editingDocs[key]) editingDocs[key] = {};
+  editingDocs[key].status = editingDocs[key].status === 'na' ? undefined : 'na';
+  if (editingDocs[key].status === 'na') editingDocs[key].have = false;
+  renderDocForm();
+}
+
+function renderNotesLog() {
+  var log=document.getElementById('notesLog');
+  log.innerHTML=editingNotes.length
+    ?editingNotes.slice().reverse().map(function(n){return '<div class="note-entry"><div class="note-ts">'+n.ts+'</div>'+n.text+'</div>'}).join('')
+    :'<div style="font-size:11px;color:var(--steel)">No notes yet.</div>';
+}
+function addNote() {
+  var inp=document.getElementById('f-note'), txt=inp.value.trim();
+  if(!txt) return;
+  editingNotes.push({ts:new Date().toLocaleDateString('en-US'),text:txt});
+  inp.value=''; renderNotesLog();
+}
+
+function saveJob() {
+  var name=document.getElementById('f-name').value.trim();
+  if(!name){alert('Job name is required.');return;}
+  var id=document.getElementById('editId').value;
+  var clientId = document.getElementById('f-clientId').value ? Number(document.getElementById('f-clientId').value) : null;
+  var cl = clientId ? clients.find(function(c){return c.id===clientId}) : null;
+  var job={
+    id:            id?Number(id):nid(),
+    name:          name,
+    client:        cl ? clientFullName(cl) : '',
+    clientId:      clientId,
+    address:       document.getElementById('f-address').value.trim(),
+    type:          document.getElementById('f-type').value,
+    status:        document.getElementById('f-status').value,
+    start:         document.getElementById('f-start').value,
+    end:           document.getElementById('f-end').value,
+    progress:      parseInt(document.getElementById('f-progress').value)||0,
+    crew:          csv(document.getElementById('f-crew').value),
+    subs:          csv(document.getElementById('f-subs').value),
+    vendors:       csv(document.getElementById('f-vendors').value),
+    changeOrders:  editingCOs.filter(function(c){return c.desc}),
+    notes:         editingNotes,
+    contractValue: parseFloat(document.getElementById('f-contractValue').value)||0,
+    budget:        parseFloat(document.getElementById('f-budget').value)||0,
+    spent:         parseFloat(document.getElementById('f-spent').value)||0,
+    draws:         editingDraws.filter(function(d){return d.desc}),
+    compliance:    editingComp,
+    docs:          editingDocs,
+  };
+  if(id){var idx=jobs.findIndex(function(j){return j.id===Number(id)});jobs[idx]=job;}
+  else{jobs.unshift(job);}
+  save(); render(); closeModal();
+}
+
+function deleteJob() {
+  var id=document.getElementById('editId').value;
+  if(!id||!confirm('Delete this job? This cannot be undone.'))return;
+  jobs=jobs.filter(function(j){return j.id!==Number(id)});
+  save(); render(); closeModal();
+}
+
+// ── CLIENT SELECTOR IN JOB MODAL ──────────────────────────────
+function populateClientSelect(selectId) {
+  var sel = document.getElementById('f-clientId');
+  var sortedClients = clients.slice().sort(function(a,b){return clientFullName(a).localeCompare(clientFullName(b))});
+  sel.innerHTML = '<option value="">\u2014 Select client \u2014</option>' +
+    sortedClients.map(function(c){return '<option value="'+c.id+'" '+(c.id===selectId?'selected':'')+'>'+clientFullName(c)+'</option>'}).join('');
+  onClientSelect();
+}
+function onClientSelect() {
+  var cid  = Number(document.getElementById('f-clientId').value);
+  var prev = document.getElementById('clientPreview');
+  var c    = clients.find(function(x){return x.id===cid});
+  if (!c) { prev.classList.remove('show'); prev.innerHTML=''; return; }
+  prev.classList.add('show');
+  prev.innerHTML = [
+    c.phone   ?'<div class="client-preview-row"><span>\uD83D\uDCDE</span><a href="tel:'+c.phone+'">'+c.phone+'</a></div>':'',
+    c.email   ?'<div class="client-preview-row"><span>\u2709\uFE0F</span><a href="mailto:'+c.email+'">'+c.email+'</a></div>':'',
+    c.mailing ?'<div class="client-preview-row"><span>\uD83C\uDFE0</span><span style="color:var(--fog)">'+c.mailing+'</span></div>':'',
+    c.project ?'<div class="client-preview-row"><span>\uD83D\uDCCD</span><span style="color:var(--fog)">'+c.project+'</span></div>':'',
+  ].filter(Boolean).join('')||'<span style="color:var(--rule2)">No contact info yet \u2014 edit client to add</span>';
+}
+function openAddClientFromJob() {
+  _returnToJob = true;
+  document.getElementById('editClientId').value='';
+  document.getElementById('clientModalTitle').textContent='New Client';
+  document.getElementById('deleteClientBtn').style.display='none';
+  ['fc-first','fc-last','fc-phone','fc-email','fc-mailing','fc-project','fc-notes'].forEach(function(id){document.getElementById(id).value=''});
+  document.getElementById('jobOverlay').classList.remove('open');
+  document.getElementById('clientOverlay').classList.add('open');
+}
+
+// ── CLIENT CRUD ────────────────────────────────────────────────
+function renderClients() {
+  var grid = document.getElementById('clientGrid');
+  if (!grid) return;
+  var q = (document.getElementById('clientSearchBar')?.value||'').toLowerCase();
+  var list = clients.filter(function(c){ return !q || clientFullName(c).toLowerCase().includes(q) || (c.phone||'').includes(q) || (c.email||'').toLowerCase().includes(q) });
+  document.getElementById('client-count').textContent = list.length + ' client' + (list.length!==1?'s':'');
+  if (!list.length) { grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--steel);font-family:var(--font-d);font-size:16px;letter-spacing:2px">NO CLIENTS FOUND</div>'; return; }
+  grid.innerHTML = list.map(function(c){
+    var jobCount = jobs.filter(function(j){return j.clientId===c.id}).length;
+    var jobChips = jobs.filter(function(j){return j.clientId===c.id}).map(function(j){return '<span class="client-jobs-chip">\uD83C\uDFD7 '+j.name+'</span>'}).join('');
+    return '<div class="client-card">' +
+      '<div class="client-card-top"><div class="client-name">'+(clientFullName(c)||'<em style="color:var(--rule2)">No name</em>')+'</div><span class="client-job-count">'+jobCount+' job'+(jobCount!==1?'s':'')+'</span></div>' +
+      (c.phone   ?'<div class="client-info-row"><span class="client-info-icon">\uD83D\uDCDE</span><span class="client-info-val"><a href="tel:'+c.phone+'">'+c.phone+'</a></span></div>':'') +
+      (c.email   ?'<div class="client-info-row"><span class="client-info-icon">\u2709\uFE0F</span><span class="client-info-val"><a href="mailto:'+c.email+'">'+c.email+'</a></span></div>':'') +
+      (c.mailing ?'<div class="client-info-row"><span class="client-info-icon">\uD83C\uDFE0</span><span class="client-info-val">'+c.mailing+'</span></div>':'') +
+      (c.project ?'<div class="client-info-row"><span class="client-info-icon">\uD83D\uDCCD</span><span class="client-info-val">'+c.project+'</span></div>':'') +
+      (c.notes   ?'<div class="client-info-row"><span class="client-info-icon">\uD83D\uDCDD</span><span class="client-info-val" style="color:var(--steel)">'+c.notes+'</span></div>':'') +
+      ((!c.phone&&!c.email&&!c.mailing&&!c.project)?'<div style="padding:10px 18px;font-size:11px;color:var(--rule2);font-style:italic">No contact info yet \u2014 click Edit to add</div>':'') +
+      (jobChips?'<div style="padding:8px 18px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:4px">'+jobChips+'</div>':'') +
+      '<div class="client-card-actions"><button class="btn btn-ghost btn-sm" onclick="openEditClient('+JSON.stringify(c.id)+')">Edit</button></div>' +
+    '</div>';
+  }).join('');
+}
+
+function openAddClient() {
+  _returnToJob = false;
+  document.getElementById('editClientId').value='';
+  document.getElementById('clientModalTitle').textContent='New Client';
+  document.getElementById('deleteClientBtn').style.display='none';
+  ['fc-first','fc-last','fc-phone','fc-email','fc-mailing','fc-project','fc-notes'].forEach(function(id){document.getElementById(id).value=''});
+  document.getElementById('clientOverlay').classList.add('open');
+}
+function openEditClient(id) {
+  var c = clients.find(function(x){return x.id===id});
+  if (!c) return;
+  document.getElementById('editClientId').value=id;
+  document.getElementById('clientModalTitle').textContent='Edit Client';
+  document.getElementById('deleteClientBtn').style.display='inline-flex';
+  document.getElementById('fc-first').value   =c.first||'';
+  document.getElementById('fc-last').value    =c.last||'';
+  document.getElementById('fc-phone').value   =c.phone||'';
+  document.getElementById('fc-email').value   =c.email||'';
+  document.getElementById('fc-mailing').value =c.mailing||'';
+  document.getElementById('fc-project').value =c.project||'';
+  document.getElementById('fc-notes').value   =c.notes||'';
+  document.getElementById('clientOverlay').classList.add('open');
+}
+function closeClientModal() { document.getElementById('clientOverlay').classList.remove('open'); }
+document.getElementById('clientOverlay').addEventListener('click', function(e){ if(e.target.id==='clientOverlay') closeClientModal(); });
+
+function saveClient() {
+  var first=document.getElementById('fc-first').value.trim();
+  var last =document.getElementById('fc-last').value.trim();
+  if(!first&&!last){alert('Client name is required.');return;}
+  var id=document.getElementById('editClientId').value;
+  var client={
+    id:      id?Number(id):nid(),
+    first:   first,
+    last:    last,
+    phone:   document.getElementById('fc-phone').value.trim(),
+    email:   document.getElementById('fc-email').value.trim(),
+    mailing: document.getElementById('fc-mailing').value.trim(),
+    project: document.getElementById('fc-project').value.trim(),
+    notes:   document.getElementById('fc-notes').value.trim(),
+  };
+  if(id){var idx=clients.findIndex(function(c){return c.id===Number(id)});clients[idx]=client;}
+  else{clients.unshift(client);}
+  saveClients();
+  closeClientModal();
+  if (_returnToJob) {
+    populateClientSelect(client.id);
+    document.getElementById('jobOverlay').classList.add('open');
+  } else {
+    renderClients();
+  }
+}
+function deleteClient() {
+  var id=document.getElementById('editClientId').value;
+  if(!id||!confirm('Delete this client? Jobs linked to them will be unlinked.'))return;
+  clients=clients.filter(function(c){return c.id!==Number(id)});
+  jobs.forEach(function(j){if(j.clientId===Number(id))j.clientId=null;});
+  _save(); _saveClients(); scheduleSave(); closeClientModal(); renderClients(); render();
+}
+
+// ── GOOGLE DRIVE SYNC ──────────────────────────────────────────
+// ── RETRY CONFIG ────────────────────────────────────────────────
+var RETRY_DELAYS   = [5, 15, 30];
+var MAX_AUTH_RETRY = 3;
+var saveRetryCount   = 0;
+var loadRetryCount   = 0;
+var authRetryCount   = 0;
+var retryCountdownTimer = null;
+
+function setSyncState(state, label) {
+  var dot = document.getElementById('syncDot');
+  var lbl = document.getElementById('syncLabel');
+  var gearBtn = document.getElementById('syncResetBtn');
+  if (!dot||!lbl) return;
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = label || {offline:'Not Connected',connected:'Drive Connected',saving:'Saving\u2026',error:'Sync Error'}[state] || state;
+  // Show gear button whenever a Client ID is stored
+  if (gearBtn) gearBtn.style.display = driveClientId ? 'inline-flex' : 'none';
+}
+
+function retryCountdown(seconds, label, callback) {
+  clearInterval(retryCountdownTimer);
+  var remaining = seconds;
+  setSyncState('error', label + ' \u2013 retry in ' + remaining + 's');
+  retryCountdownTimer = setInterval(function(){
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(retryCountdownTimer);
+      retryCountdownTimer = null;
+      callback();
+    } else {
+      setSyncState('error', label + ' \u2013 retry in ' + remaining + 's');
+    }
+  }, 1000);
+}
+
+function cancelRetry() {
+  clearInterval(retryCountdownTimer);
+  retryCountdownTimer = null;
+}
+
+function handleSyncClick() {
+  if (retryCountdownTimer) { cancelRetry(); }
+  if (!driveClientId) { openDriveSetup(); return; }
+  if (!driveToken)    { authRetryCount=0; driveSignIn(); return; }
+  saveRetryCount=0; driveSave();
+}
+
+// ── SYNC SETTINGS MENU ─────────────────────────────────────────
+function openSyncMenu(e) {
+  e.stopPropagation();
+  closeSyncMenu(); // close any existing
+  var menu = document.createElement('div');
+  menu.className = 'sync-menu';
+  menu.id = 'syncMenu';
+
+  // Show current Client ID (truncated)
+  var shortId = driveClientId.length > 30 ? driveClientId.slice(0,12) + '\u2026' + driveClientId.slice(-24) : driveClientId;
+  menu.innerHTML =
+    '<div class="sync-menu-info">' +
+      '<div class="sync-menu-info-label">Current Client ID</div>' +
+      '<div class="sync-menu-info-val">' + shortId + '</div>' +
+    '</div>' +
+    (driveToken
+      ? '<div class="sync-menu-item" onclick="closeSyncMenu();saveRetryCount=0;driveSave()"><span class="sync-menu-icon">\uD83D\uDD04</span>Force Sync Now</div>'
+      : '<div class="sync-menu-item" onclick="closeSyncMenu();authRetryCount=0;driveSignIn()"><span class="sync-menu-icon">\uD83D\uDD17</span>Reconnect</div>'
+    ) +
+    '<div class="sync-menu-item" onclick="closeSyncMenu();changeClientId()"><span class="sync-menu-icon">\uD83D\uDD11</span>Change Client ID</div>' +
+    '<div class="sync-menu-item danger" onclick="closeSyncMenu();disconnectDrive()"><span class="sync-menu-icon">\u26D4</span>Disconnect Drive</div>';
+
+  // Position relative to the gear button
+  var btn = document.getElementById('syncResetBtn');
+  var wrap = btn.parentElement;
+  wrap.style.position = 'relative';
+  wrap.appendChild(menu);
+
+  // Close on outside click
+  setTimeout(function(){
+    document.addEventListener('click', _closeSyncMenuHandler);
+  }, 10);
+}
+
+function _closeSyncMenuHandler(e) {
+  var menu = document.getElementById('syncMenu');
+  if (menu && !menu.contains(e.target)) closeSyncMenu();
+}
+
+function closeSyncMenu() {
+  var menu = document.getElementById('syncMenu');
+  if (menu) menu.remove();
+  document.removeEventListener('click', _closeSyncMenuHandler);
+}
+
+function changeClientId() {
+  // Open setup modal pre-filled with existing ID so user can correct it
+  hideAuthError();
+  cancelRetry();
+  document.getElementById('driveClientId').value = driveClientId || '';
+  document.getElementById('setupReplaceNotice').style.display = 'block';
+  hideInlineError();
+  document.getElementById('driveSetupOverlay').classList.add('open');
+  // Scroll to step 6 (the input)
+  setTimeout(function(){
+    var input = document.getElementById('driveClientId');
+    if (input) { input.focus(); input.select(); }
+  }, 200);
+}
+
+function disconnectDrive() {
+  if (!confirm('Disconnect Google Drive?\n\nYour data will stay in localStorage but will no longer sync to Drive. You can reconnect anytime.')) return;
+  cancelRetry();
+  hideAuthError();
+  driveClientId = '';
+  driveFileId = '';
+  driveToken = null;
+  localStorage.removeItem(DRIVE_KEY);
+  localStorage.removeItem(DRIVE_FILE_KEY);
+  setSyncState('offline', 'Not Connected');
+}
+
+function resetAndReenterClientId() {
+  // Called from error banners — clears the bad ID and opens setup fresh
+  hideAuthError();
+  cancelRetry();
+  driveToken = null;
+  driveFileId = '';
+  localStorage.removeItem(DRIVE_FILE_KEY);
+  // Keep the old value in the input so user can see what was wrong
+  document.getElementById('driveClientId').value = driveClientId || '';
+  driveClientId = '';
+  localStorage.removeItem(DRIVE_KEY);
+  setSyncState('offline', 'Not Connected');
+  document.getElementById('setupReplaceNotice').style.display = 'block';
+  hideInlineError();
+  document.getElementById('driveSetupOverlay').classList.add('open');
+  setTimeout(function(){
+    var input = document.getElementById('driveClientId');
+    if (input) { input.focus(); input.select(); }
+  }, 200);
+}
+
+function openDriveSetup() {
+  document.getElementById('driveClientId').value = driveClientId || '';
+  document.getElementById('setupReplaceNotice').style.display = 'none';
+  hideInlineError();
+  document.getElementById('driveSetupOverlay').classList.add('open');
+}
+function closeDriveSetup() { document.getElementById('driveSetupOverlay').classList.remove('open'); }
+document.getElementById('driveSetupOverlay').addEventListener('click', function(e){ if(e.target.id==='driveSetupOverlay') closeDriveSetup(); });
+
+// ── FIX 1: Relaxed Client ID validation regex ────────────────
+// Now accepts uppercase letters, underscores, and dashes in the hash portion
+function isValidClientIdFormat(id) {
+  return /^\d+[-a-zA-Z0-9_]+\.apps\.googleusercontent\.com$/.test(id.trim());
+}
+
+function oauthErrorInfo(errorCode, errorDesc) {
+  var code = (errorCode || '').toLowerCase();
+  var desc = (errorDesc || '').toLowerCase();
+
+  if (code === 'idpiframe_initialization_failed' || desc.includes('not found') ||
+      desc.includes('invalid_client') || code === 'invalid_client') {
+    return {
+      msg: 'Client ID not found in Google Cloud',
+      detail: 'The Client ID doesn\'t match any project. Check that you copied it correctly from Google Cloud Console \u2192 Credentials.',
+      showFix: true,
+      retry: false,
+    };
+  }
+  if (code === 'unauthorized_client' || desc.includes('unauthorized') ||
+      desc.includes('not authorized') || desc.includes('origin')) {
+    return {
+      msg: 'This site is not an authorized origin',
+      detail: 'Go to Google Cloud Console \u2192 Credentials \u2192 edit your OAuth client \u2192 add "https://sperezjr-byte.github.io" under Authorized JavaScript origins.',
+      showFix: false,
+      retry: false,
+    };
+  }
+  if (desc.includes('test user') || desc.includes('not added') || desc.includes('not a test')) {
+    return {
+      msg: 'Your Google account isn\'t added as a test user',
+      detail: 'Go to Google Cloud Console \u2192 OAuth consent screen \u2192 Test users \u2192 add your Gmail address.',
+      showFix: false,
+      retry: false,
+    };
+  }
+  if (code === 'access_denied') {
+    return {
+      msg: 'Sign-in cancelled',
+      detail: 'You closed the sign-in window. Click the sync button to try again.',
+      showFix: false,
+      retry: false,
+    };
+  }
+  if (code === 'popup_closed_by_user' || code === 'popup_blocked_by_browser') {
+    return {
+      msg: 'Sign-in popup was blocked or closed',
+      detail: 'Allow popups for this site, then click the sync button to try again.',
+      showFix: false,
+      retry: false,
+    };
+  }
+  if (code === 'user_cancel') {
+    return {
+      msg: 'Sign-in cancelled \u2013 click to retry',
+      detail: null,
+      showFix: false,
+      retry: false,
+    };
+  }
+  return {
+    msg: 'Auth error: ' + (errorCode || 'unknown'),
+    detail: errorDesc || null,
+    showFix: true,
+    retry: true,
+  };
+}
+
+function showAuthError(info) {
+  var banner = document.getElementById('authErrorBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'authErrorBanner';
+    banner.style.cssText = 'position:fixed;bottom:70px;right:16px;z-index:9999;background:#2a1a1a;border:1px solid #c0392b;border-radius:8px;padding:12px 16px;max-width:340px;font-size:12px;line-height:1.5;color:#f5c6c6;box-shadow:0 4px 16px rgba(0,0,0,.6)';
+    document.body.appendChild(banner);
+  }
+  var html = '<div style="font-weight:700;color:#e74c3c;margin-bottom:4px">\u26D4 ' + info.msg + '</div>';
+  if (info.detail) html += '<div style="color:#ccc;margin-bottom:8px">' + info.detail + '</div>';
+  var btns = '<button onclick="document.getElementById(\'authErrorBanner\').remove()" style="background:#333;border:1px solid #555;color:#aaa;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;margin-right:6px">Dismiss</button>';
+  if (info.showFix) {
+    btns += '<button onclick="document.getElementById(\'authErrorBanner\').remove();resetAndReenterClientId()" style="background:#e8952a;border:none;color:#000;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:700">Fix Client ID \u2192</button>';
+  }
+  banner.innerHTML = html + '<div>' + btns + '</div>';
+  setTimeout(function(){ var b = document.getElementById('authErrorBanner'); if(b) b.remove(); }, 30000);
+}
+
+function hideAuthError() {
+  var b = document.getElementById('authErrorBanner');
+  if (b) b.remove();
+}
+
+function saveDriveClientId() {
+  var raw = document.getElementById('driveClientId').value.trim();
+  if (!raw) {
+    showInlineError('Please paste your Client ID from Google Cloud Console.');
+    return;
+  }
+  if (!isValidClientIdFormat(raw)) {
+    showInlineError(
+      'That doesn\'t look like a valid Client ID.<br>' +
+      'It should end with <code style="background:#333;padding:1px 4px;border-radius:3px">.apps.googleusercontent.com</code><br>' +
+      'Example: <code style="background:#333;padding:1px 4px;border-radius:3px;font-size:10px">123456789-abc\u2026.apps.googleusercontent.com</code>'
+    );
+    return;
+  }
+  hideInlineError();
+  driveClientId = raw;
+  localStorage.setItem(DRIVE_KEY, raw);
+  closeDriveSetup();
+  authRetryCount = 0;
+  driveSignIn();
+}
+
+function showInlineError(msg) {
+  var el = document.getElementById('clientIdInlineError');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'clientIdInlineError';
+    el.style.cssText = 'margin-top:8px;padding:8px 12px;background:#2a1a1a;border:1px solid #c0392b;border-radius:6px;color:#f5c6c6;font-size:12px;line-height:1.5';
+    var input = document.getElementById('driveClientId');
+    if (input && input.parentNode) input.parentNode.appendChild(el);
+  }
+  el.innerHTML = '\u26D4 ' + msg;
+}
+function hideInlineError() {
+  var el = document.getElementById('clientIdInlineError');
+  if (el) el.remove();
+}
+
+function driveSignIn() {
+  if (!driveClientId) { openDriveSetup(); return; }
+
+  // FIX 4: Check for google.accounts.oauth2 specifically, not just google
+  if (typeof google === 'undefined' || typeof google.accounts === 'undefined' || typeof google.accounts.oauth2 === 'undefined') {
+    // FIX 7: Distinguish script-blocked vs not-yet-loaded
+    if (window._gsiFailed) {
+      setSyncState('error', 'Google script blocked');
+      showAuthError({ msg:'Google Identity script failed to load', detail:'This may be blocked by an ad blocker or network issue. Try disabling extensions or reloading the page.', showFix:false, retry:false });
+      authRetryCount = 0;
+    } else if (authRetryCount < MAX_AUTH_RETRY) {
+      var delay = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+      authRetryCount++;
+      console.warn('Google Identity not loaded. Retry ' + authRetryCount + '/' + MAX_AUTH_RETRY + ' in ' + delay + 's');
+      retryCountdown(delay, 'Google script not ready (' + authRetryCount + '/' + MAX_AUTH_RETRY + ')', driveSignIn);
+    } else {
+      setSyncState('error', 'Reload page \u2013 script failed');
+      showAuthError({ msg:'Google Identity script failed to load', detail:'Try reloading the page. If the problem persists, check your internet connection or disable ad blockers.', showFix:false, retry:false });
+      authRetryCount = 0;
+    }
+    return;
+  }
+
+  setSyncState('saving', 'Connecting\u2026');
+  hideAuthError();
+  try {
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: driveClientId,
+      scope: DRIVE_SCOPE,
+      callback: function(resp) {
+        if (resp.error) {
+          console.error('Drive auth error:', resp.error, resp.error_description);
+          var info = oauthErrorInfo(resp.error, resp.error_description);
+          if (!info.retry) {
+            setSyncState('error', info.msg);
+            showAuthError(info);
+            authRetryCount = 0;
+            return;
+          }
+          if (authRetryCount < MAX_AUTH_RETRY) {
+            var d = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+            authRetryCount++;
+            retryCountdown(d, 'Auth error (' + authRetryCount + '/' + MAX_AUTH_RETRY + ')', driveSignIn);
+          } else {
+            setSyncState('error', 'Auth failed \u2013 check Client ID');
+            showAuthError({ msg:'Authentication failed after 3 attempts', detail:'Your Client ID may be incorrect or the origin may not be authorized.', showFix:true, retry:false });
+            authRetryCount = 0;
+          }
+          return;
+        }
+        // Auth success
+        authRetryCount = 0;
+        hideAuthError();
+        driveToken = resp.access_token;
+        setSyncState('connected', 'Drive Connected');
+        loadRetryCount = 0;
+        driveLoad();
+      },
+    });
+    client.requestAccessToken();
+  } catch(e) {
+    console.error('initTokenClient error:', e);
+    // FIX 5 & 6: Narrowed error detection — no longer matches every "invalid" string
+    var msg = (e.message||'').toLowerCase();
+    var isClientIdError = msg.includes('client_id') || msg.includes('bad request') ||
+      (msg.includes('not found') && !msg.includes('property'));
+
+    if (isClientIdError) {
+      setSyncState('error', 'Invalid Client ID');
+      showAuthError({
+        msg: 'Client ID was rejected by Google',
+        detail: 'Double-check the Client ID you pasted. It must be copied exactly from Google Cloud Console \u2192 Credentials.',
+        showFix: true,
+        retry: false,
+      });
+      authRetryCount = 0;
+    } else if (authRetryCount < MAX_AUTH_RETRY) {
+      var retryDelay = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+      authRetryCount++;
+      console.warn('initTokenClient non-fatal error, retrying:', e.message);
+      retryCountdown(retryDelay, 'Init error (' + authRetryCount + '/' + MAX_AUTH_RETRY + ')', driveSignIn);
+    } else {
+      setSyncState('error', 'Connection failed \u2013 click to retry');
+      showAuthError({
+        msg: 'Could not initialize Google sign-in',
+        detail: 'This may be a network issue or a problem with your Client ID configuration. Error: ' + (e.message||'unknown'),
+        showFix: true,
+        retry: false,
+      });
+      authRetryCount = 0;
+    }
+  }
+}
+
+async function driveGetFileId() {
+  if (driveFileId) return driveFileId;
+  var res  = await fetch(
+    'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27' + DRIVE_FILENAME + '%27&fields=files(id)',
+    { headers: { Authorization: 'Bearer ' + driveToken } }
+  );
+  if (!res.ok) throw new Error('getFileId HTTP ' + res.status);
+  var data = await res.json();
+  if (data.files && data.files.length > 0) {
+    driveFileId = data.files[0].id;
+    localStorage.setItem(DRIVE_FILE_KEY, driveFileId);
+    return driveFileId;
+  }
+  return null;
+}
+
+async function driveSave() {
+  if (!driveToken) return;
+  setSyncState('saving', 'Saving\u2026');
+  try {
+    var payload = JSON.stringify({ jobs: jobs, clients: clients, savedAt: new Date().toISOString() });
+    var fileId  = await driveGetFileId();
+    var res;
+    if (fileId) {
+      res = await fetch('https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media', {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + driveToken, 'Content-Type': 'application/json' },
+        body: payload,
+      });
+    } else {
+      var meta = JSON.stringify({ name: DRIVE_FILENAME, parents: ['appDataFolder'] });
+      var form = new FormData();
+      form.append('metadata', new Blob([meta], { type:'application/json' }));
+      form.append('file',     new Blob([payload], { type:'application/json' }));
+      res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + driveToken }, body: form,
+      });
+      var created = await res.json();
+      driveFileId = created.id;
+      localStorage.setItem(DRIVE_FILE_KEY, driveFileId);
+    }
+    if (res.ok) {
+      saveRetryCount = 0;
+      setSyncState('connected', 'Saved \u2713');
+      setTimeout(function(){ setSyncState('connected', 'Drive Connected') }, 2500);
+    } else if (res.status === 401) {
+      console.warn('Drive 401 \u2013 token expired, re-authenticating');
+      driveToken = null;
+      authRetryCount = 0;
+      setSyncState('saving', 'Re-authenticating\u2026');
+      driveSignIn();
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+  } catch(e) {
+    console.error('Drive save error:', e);
+    if (saveRetryCount < RETRY_DELAYS.length) {
+      var delay = RETRY_DELAYS[saveRetryCount];
+      saveRetryCount++;
+      retryCountdown(delay, 'Save failed (' + saveRetryCount + '/' + RETRY_DELAYS.length + ')', driveSave);
+    } else {
+      setSyncState('error', 'Save failed \u2013 click to retry');
+      saveRetryCount = 0;
+    }
+  }
+}
+
+async function driveLoad() {
+  if (!driveToken) return;
+  try {
+    var fileId = await driveGetFileId();
+    if (!fileId) { loadRetryCount=0; driveSave(); return; }
+    setSyncState('saving', 'Loading\u2026');
+    var res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    });
+    if (res.status === 401) {
+      console.warn('Drive load 401 \u2013 token expired, re-authenticating');
+      driveToken = null;
+      authRetryCount = 0;
+      setSyncState('saving', 'Re-authenticating\u2026');
+      driveSignIn();
+      return;
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data.jobs && data.jobs.length > 0) {
+      var driveJobIds      = new Set(data.jobs.map(function(j){return j.id}));
+      var localOnlyJobs    = jobs.filter(function(j){return !driveJobIds.has(j.id)});
+      jobs                 = data.jobs.concat(localOnlyJobs);
+      var driveClientIds   = new Set((data.clients||[]).map(function(c){return c.id}));
+      var localOnlyClients = clients.filter(function(c){return !driveClientIds.has(c.id)});
+      clients              = (data.clients||[]).concat(localOnlyClients);
+      _save(); _saveClients(); render();
+    }
+    loadRetryCount = 0;
+    setSyncState('connected', 'Drive Connected');
+  } catch(e) {
+    console.error('Drive load error:', e);
+    if (loadRetryCount < RETRY_DELAYS.length) {
+      var delay = RETRY_DELAYS[loadRetryCount];
+      loadRetryCount++;
+      retryCountdown(delay, 'Load failed (' + loadRetryCount + '/' + RETRY_DELAYS.length + ')', driveLoad);
+    } else {
+      setSyncState('error', 'Load failed \u2013 click to retry');
+      loadRetryCount = 0;
+    }
+  }
+}
+
+window.addEventListener('load', function(){
+  if (driveClientId) setSyncState('offline', 'Click to Connect');
+});
+
+render();
+
+</script>
+</body>
+</html>
