@@ -1250,6 +1250,14 @@ function deleteClient() {
 //  save, saveClients declared above for early init)
 
 
+// ── RETRY CONFIG ────────────────────────────────────────────────
+const RETRY_DELAYS   = [5, 15, 30];  // seconds between retries
+const MAX_AUTH_RETRY = 3;            // max sign-in attempts
+let saveRetryCount   = 0;
+let loadRetryCount   = 0;
+let authRetryCount   = 0;
+let retryCountdownTimer = null;
+
 function setSyncState(state, label) {
   const dot = document.getElementById('syncDot');
   const lbl = document.getElementById('syncLabel');
@@ -1258,10 +1266,33 @@ function setSyncState(state, label) {
   lbl.textContent = label || {offline:'Not Connected',connected:'Drive Connected',saving:'Saving…',error:'Sync Error'}[state] || state;
 }
 
+// Show a live countdown in the sync label, then fire callback
+function retryCountdown(seconds, label, callback) {
+  clearInterval(retryCountdownTimer);
+  let remaining = seconds;
+  setSyncState('error', `${label} – retry in ${remaining}s`);
+  retryCountdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(retryCountdownTimer);
+      callback();
+    } else {
+      setSyncState('error', `${label} – retry in ${remaining}s`);
+    }
+  }, 1000);
+}
+
+function cancelRetry() {
+  clearInterval(retryCountdownTimer);
+  retryCountdownTimer = null;
+}
+
 function handleSyncClick() {
+  // If a retry countdown is running, cancel it and act immediately
+  if (retryCountdownTimer) { cancelRetry(); }
   if (!driveClientId) { openDriveSetup(); return; }
-  if (!driveToken)    { driveSignIn();    return; }
-  driveSave();
+  if (!driveToken)    { authRetryCount=0; driveSignIn(); return; }
+  saveRetryCount=0; driveSave();
 }
 
 function openDriveSetup() {
@@ -1277,27 +1308,70 @@ function saveDriveClientId() {
   driveClientId = id;
   localStorage.setItem(DRIVE_KEY, id);
   closeDriveSetup();
+  authRetryCount = 0;
   driveSignIn();
 }
 
 function driveSignIn() {
   if (!driveClientId) { openDriveSetup(); return; }
   if (typeof google === 'undefined') {
-    setSyncState('error', 'Reload page');
+    // Google script not loaded yet — retry up to MAX_AUTH_RETRY times
+    if (authRetryCount < MAX_AUTH_RETRY) {
+      const delay = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+      authRetryCount++;
+      console.warn(`Google Identity not loaded. Retry ${authRetryCount}/${MAX_AUTH_RETRY} in ${delay}s`);
+      retryCountdown(delay, `Google script not ready (${authRetryCount}/${MAX_AUTH_RETRY})`, driveSignIn);
+    } else {
+      setSyncState('error', 'Reload page – Google script failed');
+      authRetryCount = 0;
+    }
     return;
   }
   setSyncState('saving', 'Connecting…');
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: driveClientId,
-    scope: DRIVE_SCOPE,
-    callback: (resp) => {
-      if (resp.error) { setSyncState('error', 'Auth Failed'); return; }
-      driveToken = resp.access_token;
-      setSyncState('connected', 'Drive Connected');
-      driveLoad();
-    },
-  });
-  client.requestAccessToken();
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: driveClientId,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp.error) {
+          console.error('Drive auth error:', resp.error, resp.error_description);
+          // Access denied / popup closed → don't auto-retry, let user re-click
+          if (resp.error === 'access_denied' || resp.error === 'popup_closed_by_user') {
+            setSyncState('error', 'Sign-in cancelled – click to retry');
+            authRetryCount = 0;
+            return;
+          }
+          // Other auth errors → retry with backoff
+          if (authRetryCount < MAX_AUTH_RETRY) {
+            const delay = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+            authRetryCount++;
+            retryCountdown(delay, `Auth error (${authRetryCount}/${MAX_AUTH_RETRY})`, driveSignIn);
+          } else {
+            setSyncState('error', 'Auth failed – check Client ID');
+            authRetryCount = 0;
+          }
+          return;
+        }
+        // ✅ Auth success
+        authRetryCount = 0;
+        driveToken = resp.access_token;
+        setSyncState('connected', 'Drive Connected');
+        loadRetryCount = 0;
+        driveLoad();
+      },
+    });
+    client.requestAccessToken();
+  } catch(e) {
+    console.error('initTokenClient error:', e);
+    if (authRetryCount < MAX_AUTH_RETRY) {
+      const delay = RETRY_DELAYS[Math.min(authRetryCount, RETRY_DELAYS.length-1)];
+      authRetryCount++;
+      retryCountdown(delay, `Init error (${authRetryCount}/${MAX_AUTH_RETRY})`, driveSignIn);
+    } else {
+      setSyncState('error', 'Auth setup failed – reload page');
+      authRetryCount = 0;
+    }
+  }
 }
 
 async function driveGetFileId() {
@@ -1306,6 +1380,7 @@ async function driveGetFileId() {
     `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${DRIVE_FILENAME}%27&fields=files(id)`,
     { headers: { Authorization: `Bearer ${driveToken}` } }
   );
+  if (!res.ok) throw new Error(`getFileId HTTP ${res.status}`);
   const data = await res.json();
   if (data.files && data.files.length > 0) {
     driveFileId = data.files[0].id;
@@ -1341,34 +1416,73 @@ async function driveSave() {
       localStorage.setItem(DRIVE_FILE_KEY, driveFileId);
     }
     if (res.ok) {
+      saveRetryCount = 0;
       setSyncState('connected', 'Saved ✓');
       setTimeout(() => setSyncState('connected', 'Drive Connected'), 2500);
-    } else { throw new Error(res.status); }
-  } catch(e) { console.error('Drive save:', e); setSyncState('error', 'Save Failed'); }
+    } else if (res.status === 401) {
+      // Token expired → re-auth then retry save
+      console.warn('Drive 401 – token expired, re-authenticating');
+      driveToken = null;
+      authRetryCount = 0;
+      setSyncState('saving', 'Re-authenticating…');
+      driveSignIn();
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch(e) {
+    console.error('Drive save error:', e);
+    if (saveRetryCount < RETRY_DELAYS.length) {
+      const delay = RETRY_DELAYS[saveRetryCount];
+      saveRetryCount++;
+      retryCountdown(delay, `Save failed (${saveRetryCount}/${RETRY_DELAYS.length})`, driveSave);
+    } else {
+      setSyncState('error', 'Save failed – click to retry');
+      saveRetryCount = 0;
+    }
+  }
 }
 
 async function driveLoad() {
   if (!driveToken) return;
   try {
     const fileId = await driveGetFileId();
-    if (!fileId) { driveSave(); return; }
+    if (!fileId) { loadRetryCount=0; driveSave(); return; }
     setSyncState('saving', 'Loading…');
-    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${driveToken}` }
     });
-    if (!res.ok) throw new Error('Load failed');
+    if (res.status === 401) {
+      console.warn('Drive load 401 – token expired, re-authenticating');
+      driveToken = null;
+      authRetryCount = 0;
+      setSyncState('saving', 'Re-authenticating…');
+      driveSignIn();
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data.jobs && data.jobs.length > 0) {
-      const driveJobIds    = new Set(data.jobs.map(j=>j.id));
-      const localOnlyJobs  = jobs.filter(j=>!driveJobIds.has(j.id));
-      jobs = [...data.jobs, ...localOnlyJobs];
+      const driveJobIds      = new Set(data.jobs.map(j=>j.id));
+      const localOnlyJobs    = jobs.filter(j=>!driveJobIds.has(j.id));
+      jobs                   = [...data.jobs, ...localOnlyJobs];
       const driveClientIds   = new Set((data.clients||[]).map(c=>c.id));
       const localOnlyClients = clients.filter(c=>!driveClientIds.has(c.id));
-      clients = [...(data.clients||[]), ...localOnlyClients];
+      clients                = [...(data.clients||[]), ...localOnlyClients];
       _save(); _saveClients(); render();
     }
+    loadRetryCount = 0;
     setSyncState('connected', 'Drive Connected');
-  } catch(e) { console.error('Drive load:', e); setSyncState('error', 'Load Failed'); }
+  } catch(e) {
+    console.error('Drive load error:', e);
+    if (loadRetryCount < RETRY_DELAYS.length) {
+      const delay = RETRY_DELAYS[loadRetryCount];
+      loadRetryCount++;
+      retryCountdown(delay, `Load failed (${loadRetryCount}/${RETRY_DELAYS.length})`, driveLoad);
+    } else {
+      setSyncState('error', 'Load failed – click to retry');
+      loadRetryCount = 0;
+    }
+  }
 }
 
 function scheduleSave() {
